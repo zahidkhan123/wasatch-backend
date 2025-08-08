@@ -1015,20 +1015,31 @@ const getEmployeeWorkHistory = async (
 };
 
 const deleteEmployeeAccountService = async (employeeId: string) => {
-  const employee = await Employee.findById(employeeId);
-  if (!employee) {
+  try {
+    const employee = await Employee.findById(employeeId);
+    if (!employee) {
+      return {
+        success: false,
+        message: "Employee not found",
+        statusCode: 404,
+      };
+    }
+
+    return {
+      success: true,
+      message: "Employee account deleted successfully",
+      statusCode: 200,
+      data: null,
+    };
+  } catch (error: any) {
+    console.error("Error deleting employee account:", error);
     return {
       success: false,
-      message: "Employee not found",
-      statusCode: 404,
+      message: "Failed to delete employee account.",
+      error: error.message,
+      statusCode: 500,
     };
   }
-
-  return {
-    success: true,
-    message: "Employee account deleted successfully",
-    statusCode: 200,
-  };
 };
 
 export {
