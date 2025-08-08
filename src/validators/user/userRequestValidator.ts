@@ -1,8 +1,8 @@
 import Joi from "joi";
 import { objectIdValidator } from "../../helpers/helperFunctions.js";
 import dayjs from "dayjs";
-import utc from "dayjs/plugin/utc";
-import timezone from "dayjs/plugin/timezone";
+import utc from "dayjs/plugin/utc.js";
+import timezone from "dayjs/plugin/timezone.js";
 
 export const registerUserValidationSchema = Joi.object({
   name: Joi.string().required().max(100).messages({
