@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Registration Status</title>
+  </head>
+  <body
+    style="
+      font-family: Arial, sans-serif;
+      line-height: 1.6;
+      max-width: 600px;
+      margin: auto;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      padding: 20px;
+      background-color: #f9f9f9;
+    "
+  >
+    <div style="text-align: center; padding-bottom: 20px">
+      <h2 style="color: #ffa501">Registration Status</h2>
+      <p style="color: #333; font-size: 14px">
+        Thank you for registering with ZOR. Your registration request has been
+        <strong style=`color: ${STATUS_COLOR}`>{{STATUS}}</strong>.
+      </p>
+    </div>
+
+    <div
+      style="
+        text-align: center;
+        padding: 20px;
+        background-color: #fff;
+        border-radius: 4px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+      "
+    >
+      <p style="font-size: 16px; color: #333">
+        {{MESSAGE}}
+      </p>
+    </div>
+
+    <p
+      style="
+        font-size: 14px;
+        color: #666;
+        text-align: center;
+        padding-top: 20px;
+      "
+    >
+      If you have any questions, please contact our support team.
+    </p>
+
+    <div
+      style="
+        text-align: center;
+        padding-top: 10px;
+        color: #999;
+        font-size: 12px;
+      "
+    >
+      <p>© 2024 ZOR. All rights reserved.</p>
+    </div>
+  </body>
+</html>

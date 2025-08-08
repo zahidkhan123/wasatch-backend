@@ -1,0 +1,9 @@
+node_modules/
+.env
+src/config/wastecollection-ae79b-firebase-adminsdk-fbsvc-d14d79d6e8.json
+src/config/google-service-account.json
+dist/
+.tmp.driveupload/
+.DS_Store
+src/.DS_Store
+.temp.drivedownload/

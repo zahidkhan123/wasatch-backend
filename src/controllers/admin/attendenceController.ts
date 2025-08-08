@@ -1,0 +1,61 @@
+import { Request, Response } from "express";
+import { catchAsync } from "../../utils/catch-async.js";
+import {
+  fetchDailyAttendance,
+  fetchDailyAttendanceWithHours,
+  fetchEmployeeAttendanceHistory,
+} from "../../services/admin/attendenceService.js";
+import {
+  useErrorResponse,
+  useSuccessResponse,
+} from "../../utils/apiResponse.js";
+export const getDailyAttendanceController = catchAsync(
+  async (req: Request, res: Response) => {
+    const { date, name } = req.query as { date?: string; name?: string };
+    const attendance = await fetchDailyAttendance({ date, name });
+    if (attendance.success) {
+      useSuccessResponse(
+        res,
+        "Daily attendance fetched successfully",
+        attendance.data,
+        200
+      );
+    } else {
+      useErrorResponse(res, attendance.message, attendance.statusCode);
+    }
+  }
+);
+
+export const getDailyAttendanceWithHoursController = catchAsync(
+  async (req: Request, res: Response) => {
+    const date = req.params.date;
+    const attendance = await fetchDailyAttendanceWithHours(date);
+    if (attendance.success) {
+      useSuccessResponse(
+        res,
+        "Daily attendance with hours fetched successfully",
+        attendance.data,
+        200
+      );
+    } else {
+      useErrorResponse(res, attendance.message, attendance.statusCode);
+    }
+  }
+);
+
+export const getEmployeeAttendanceHistoryController = catchAsync(
+  async (req: Request, res: Response) => {
+    const search = req.query.search as string;
+    const attendance = await fetchEmployeeAttendanceHistory(search);
+    if (attendance.success) {
+      useSuccessResponse(
+        res,
+        "Employee attendance history fetched successfully",
+        attendance.data,
+        200
+      );
+    } else {
+      useErrorResponse(res, attendance.message, attendance.statusCode);
+    }
+  }
+);

@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Redirecting to PayFast...</title>
+    <style>
+        .payment-button {
+            background-color: #4CAF50;
+            border: none;
+            color: white;
+            padding: 15px 32px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 16px;
+            margin: 4px 2px;
+            cursor: pointer;
+            border-radius: 4px;
+            transition: background-color 0.3s ease;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .payment-button:hover {
+            background-color: #45a049;
+        }
+
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            background-color: #f5f5f5;
+        }
+
+        form {
+            text-align: center;
+        }
+    </style>
+</head>
+
+<body onload="document.forms[0].submit()">
+    <form action="https://ipguat.apps.net.pk/Ecommerce/api/Transaction/PostTransaction" method="POST">
+
+        <input type="hidden" name="MERCHANT_ID" value="102" />
+
+        <input type="hidden" name="TOKEN" value="aW_PWZLoTiO35VbORnmEqAZbK7NzWaAh1DhaFLaQZf0" />
+
+        <input type="hidden" name="BASKET_ID" value="basket-016" />
+
+        <input type="hidden" name="TXNAMT" value="20.00" />
+
+        <input type="hidden" name="CURRENCY_CODE" value="PKR" />
+
+        <input type="hidden" name="MERCHANT_NAME" value="Your Merchant Name" />
+
+        <input type="hidden" name="ORDER_DATE" value="2025-04-17T11:32:52.171Z" />
+
+        <input type="hidden" name="SUCCESS_URL" value="https://5dfa-43-251-252-250.ngrok-free.app/api/v1/payment/callback" />
+
+        <input type="hidden" name="FAILURE_URL" value="https://5dfa-43-251-252-250.ngrok-free.app/api/v1/payment/callback" />
+
+        <input type="hidden" name="CHECKOUT_URL" value="https://5dfa-43-251-252-250.ngrok-free.app/api/v1/payment/checkout" />
+
+        <input type="hidden" name="CUSTOMER_EMAIL_ADDRESS" value="zahid@example.com" />
+
+        <input type="hidden" name="CUSTOMER_MOBILE_NO" value="03203233333" />
+
+        <input type="hidden" name="SIGNATURE" value="3808d04f3d73590d66257309048d0586" />
+
+        <input type="hidden" name="VERSION" value="MERCHANT-CART-0.1" />
+
+        <input type="hidden" name="TXNDESC" value="Payment for services" />
+
+        <input type="hidden" name="PROCCODE" value="00" />
+
+        <input type="hidden" name="TRAN_TYPE" value="ECOMM_PURCHASE" />
+
+        <input type="hidden" name="STORE_ID" value="" />
+
+        <input type="hidden" name="RECURRING_TXN" value="" />
+
+        <input type="hidden" name="ITEMS" value="[object Object]" />
+
+        <noscript>
+            <button type="submit" class="payment-button">Continue to Payment</button>
+        </noscript>
+    </form>
+</body>
+
+</html>
