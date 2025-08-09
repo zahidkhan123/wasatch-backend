@@ -162,7 +162,7 @@ export const updateEmployeeProfileSchema = Joi.object({
     "string.min": "Last name must be at least 2 characters",
     "string.max": "Last name cannot exceed 20 characters",
   }),
-  phoneNumber: Joi.string()
+  phone: Joi.string()
     .optional()
     .regex(/^[0-9+-\s()]+$/)
     .messages({

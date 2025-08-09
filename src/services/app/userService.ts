@@ -25,7 +25,15 @@ export const updateUserService = async (
   try {
     const user = await User.findByIdAndUpdate(userId, data, {
       new: true,
-    }).select("-password -createdAt -updatedAt -routinePickup -notifications");
+    })
+      .select(
+        "_id profile.firstName profile.lastName profile.phoneNumber email property unitNumber buildingNumber role"
+      )
+      .populate({
+        path: "property",
+        select: "_id name address",
+      });
+
     if (!user) {
       return {
         success: false,
@@ -34,11 +42,31 @@ export const updateUserService = async (
         data: null,
       };
     }
+
+    // Construct response object similar to the example
+    const responseUser = {
+      _id: user._id,
+      firstName: user.profile?.firstName,
+      lastName: user.profile?.lastName,
+      phoneNumber: user.profile?.phoneNumber,
+      email: user.email,
+      property: user.property
+        ? {
+            _id: user.property._id,
+            name: user.property.name,
+            address: user.property.address,
+          }
+        : undefined,
+      unitNumber: user.unitNumber,
+      buildingNumber: user.buildingNumber,
+      role: user.role,
+    };
+
     return {
       success: true,
       message: responseMessages.profileUpdated,
       statusCode: 200,
-      data: user,
+      data: { user: responseUser },
     };
   } catch (error) {
     throw new Error(
@@ -50,7 +78,7 @@ export const updateUserService = async (
 interface updateEmployeeRequest {
   firstName?: string;
   lastName?: string;
-  phoneNumber?: string;
+  phone?: string;
   avatarUrl?: string;
 }
 
@@ -59,10 +87,16 @@ export const updateEmployeeService = async (
   data: updateEmployeeRequest
 ) => {
   try {
-    const user = await Employee.findByIdAndUpdate(userId, data, {
+    const employee = await Employee.findByIdAndUpdate(userId, data, {
       new: true,
-    }).select("-password -createdAt -updatedAt -routinePickup -notifications");
-    if (!user) {
+    })
+      .select("_id firstName lastName phone employeeId email assignedArea role")
+      .populate({
+        path: "assignedArea",
+        select: "_id name",
+      });
+
+    if (!employee) {
       return {
         success: false,
         message: responseMessages.employeeNotFound,
@@ -70,11 +104,29 @@ export const updateEmployeeService = async (
         data: null,
       };
     }
+
+    // Construct response object similar to the example
+    const responseEmployee = {
+      _id: employee._id,
+      firstName: employee.firstName,
+      lastName: employee.lastName,
+      phone: employee.phone,
+      employeeId: employee.employeeId,
+      email: employee.email,
+      assignedArea: employee.assignedArea
+        ? {
+            _id: employee.assignedArea._id,
+            name: employee.assignedArea.name,
+          }
+        : undefined,
+      role: employee.role,
+    };
+
     return {
       success: true,
       message: responseMessages.employeeUpdated,
       statusCode: 200,
-      data: user,
+      data: { user: responseEmployee },
     };
   } catch (error) {
     throw new Error(
