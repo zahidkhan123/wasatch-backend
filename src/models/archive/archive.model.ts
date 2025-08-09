@@ -21,9 +21,10 @@ export const Archive = {
   cleanupOld: async () => {
     const threshold = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000);
 
+    // The filter already ensures we only get users/employees with deletedAt set and older than threshold.
     const oldUsers = await User.find({
       deletedAt: { $ne: null, $lte: threshold },
-    }).skipDeleted();
+    });
 
     for (const user of oldUsers) {
       await Archive.save("User", user.toObject());
@@ -32,7 +33,7 @@ export const Archive = {
 
     const oldEmployees = await Employee.find({
       deletedAt: { $ne: null, $lte: threshold },
-    }).skipDeleted();
+    });
 
     for (const emp of oldEmployees) {
       await Archive.save("Employee", emp.toObject());

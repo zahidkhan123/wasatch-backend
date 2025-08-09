@@ -66,6 +66,8 @@ app.set("views", viewsPath);
 app.set("view engine", "ejs");
 
 app.get("/", (req: Request, res: Response) => {
+  const deviceType = req.headers["x-device-type"];
+  console.log("deviceType", deviceType);
   res.send(`Server is listning on port ${port}`);
 });
 // startArchiveCleanupJob();
