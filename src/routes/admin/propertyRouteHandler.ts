@@ -3,6 +3,7 @@ import {
   createProperty,
   getProperties,
   getPropertyById,
+  deleteProperty,
   updateProperty,
 } from "../../controllers/admin/propertyController.js";
 import {
@@ -45,6 +46,13 @@ router.put(
   adminAuthMiddleware as any,
   validationMiddleware(updatePropertySchema),
   updateProperty
+);
+
+router.delete(
+  "/:id",
+  authenticate as RequestHandler,
+  adminAuthMiddleware as any,
+  deleteProperty
 );
 
 export default router;

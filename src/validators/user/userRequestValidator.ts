@@ -148,3 +148,29 @@ export const updateUserProfileSchema = Joi.object({
     "string.empty": "Unit number is required",
   }),
 });
+
+export const updateEmployeeProfileSchema = Joi.object({
+  firstName: Joi.string().min(2).max(20).optional().messages({
+    "string.base": "First name must be a string",
+    "string.empty": "First name is required",
+    "string.min": "First name must be at least 2 characters",
+    "string.max": "First name cannot exceed 20 characters",
+  }),
+  lastName: Joi.string().min(2).max(20).optional().messages({
+    "string.base": "Last name must be a string",
+    "string.empty": "Last name is required",
+    "string.min": "Last name must be at least 2 characters",
+    "string.max": "Last name cannot exceed 20 characters",
+  }),
+  phoneNumber: Joi.string()
+    .optional()
+    .regex(/^[0-9+-\s()]+$/)
+    .messages({
+      "string.pattern.base": "Phone number format is invalid",
+      "string.base": "Phone number must be a string",
+    }),
+  avatarUrl: Joi.string().uri().optional().messages({
+    "string.uri": "Avatar URL must be a valid URI",
+    "string.base": "Avatar URL must be a string",
+  }),
+});

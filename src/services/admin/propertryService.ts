@@ -119,3 +119,33 @@ export const updatePropertyService = async (
     };
   }
 };
+
+export const deletePropertyService = async (id: string) => {
+  try {
+    const property = await Property.findById(id);
+    if (!property) {
+      return {
+        message: "Property not found.",
+        statusCode: 404,
+        success: false,
+      };
+    }
+
+    // Delete the property
+    await Property.findByIdAndDelete(id);
+
+    return {
+      message: "Property deleted successfully.",
+      statusCode: 200,
+      success: true,
+      data: null,
+    };
+  } catch (error: any) {
+    console.log(error);
+    return {
+      message: error.message || "Failed to delete property.",
+      statusCode: 400,
+      success: false,
+    };
+  }
+};

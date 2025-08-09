@@ -4,6 +4,7 @@ import {
   getPropertiesService,
   getPropertyByIdService,
   updatePropertyService,
+  deletePropertyService,
 } from "../../services/admin/propertryService.js";
 import { catchAsync } from "../../utils/catch-async.js";
 import {
@@ -47,6 +48,17 @@ export const getPropertyById = catchAsync(
 export const updateProperty = catchAsync(
   async (req: Request, res: Response) => {
     const result = await updatePropertyService(req.params.id, req.body);
+    if (result.success) {
+      useSuccessResponse(res, result.message, result.data, result.statusCode);
+    } else {
+      useErrorResponse(res, result.message, result.statusCode);
+    }
+  }
+);
+
+export const deleteProperty = catchAsync(
+  async (req: Request, res: Response) => {
+    const result = await deletePropertyService(req.params.id);
     if (result.success) {
       useSuccessResponse(res, result.message, result.data, result.statusCode);
     } else {

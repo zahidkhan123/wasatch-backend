@@ -18,6 +18,7 @@ interface IEmployee extends Document {
   comparePassword(candidatePassword: string): Promise<boolean>;
   deletedAt: Date;
   softDelete(): Promise<void>;
+  skipDeleted(): Query<IEmployee[], IEmployee>;
 }
 
 const employeeSchema = new Schema<IEmployee>(
@@ -69,13 +70,16 @@ employeeSchema.methods.softDelete = async function (): Promise<void> {
   await this.save();
 };
 
-employeeSchema.pre<Query<IEmployee[], IEmployee>>(
-  /^find/,
-  function (next: any) {
-    this.setQuery({ ...this.getQuery(), deletedAt: null });
-    next();
+employeeSchema.pre(/^find/, function (this: Query<any, any>, next: any) {
+  if (this.getFilter().deletedAt === undefined) {
+    this.where({ deletedAt: null });
   }
-);
+  next();
+});
+
+employeeSchema.statics.skipDeleted = function () {
+  return this.find().where("deletedAt").ne(null);
+};
 
 const Employee = model<IEmployee>("Employee", employeeSchema);
 export { Employee, IEmployee };

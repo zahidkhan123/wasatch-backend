@@ -30,6 +30,7 @@ export interface IUser extends Document {
   updatedAt: Date;
   comparePassword(candidatePassword: string): Promise<boolean>;
   softDelete(): Promise<void>;
+  skipDeleted(): Query<IUser[], IUser>;
 }
 
 const UserSchema = new Schema<IUser>(
@@ -84,9 +85,14 @@ UserSchema.methods.softDelete = async function (): Promise<void> {
   await this.save();
 };
 
-UserSchema.pre<Query<IUser[], IUser>>(/^find/, function (next: any) {
-  this.setQuery({ ...this.getQuery(), deletedAt: null });
+UserSchema.pre(/^find/, function (this: Query<any, any>, next: any) {
+  if (this.getFilter().deletedAt === undefined) {
+    this.where({ deletedAt: null });
+  }
   next();
 });
 
+UserSchema.statics.skipDeleted = function () {
+  return this.find().where("deletedAt").ne(null);
+};
 export const User = model<IUser>("User", UserSchema);

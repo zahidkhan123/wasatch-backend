@@ -128,7 +128,7 @@ export const createAndAssignTaskManually = async (
       scheduledDate,
       timeSlot,
       specialInstructions,
-      isTemporaryAssignment = false,
+      isTemporaryAssignment = true,
       tempAssignmentEndDate,
       assignedBy,
       tempAssignmentReason = "Task assignment",

@@ -165,7 +165,7 @@ export const loginUser = async ({
   if (role === "user") {
     model = User;
     selectFields =
-      "name email profile unitNumber property role password apartmentName buildingNumber";
+      "name email profile unitNumber property role password phoneNumber apartmentName buildingNumber";
     populateOptions = {
       path: "property",
       model: "Property",

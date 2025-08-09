@@ -13,6 +13,7 @@ import { Employee } from "../../models/employee/employee.model.js";
 import { Property } from "../../models/admin/property.model.js";
 import utc from "dayjs/plugin/utc.js";
 import timezone from "dayjs/plugin/timezone.js";
+import { Task } from "../../models/admin/task.model.js";
 dayjs.extend(utc);
 dayjs.extend(timezone);
 
@@ -198,6 +199,17 @@ export const getAdminDashboardService = async () => {
 
     const activePropertiesCount = activePropertiesSet.size;
 
+    // === 4. TASK STATS ===
+    // Get all tasks for today
+    const allTodayTasks = await Task.find({
+      scheduledDate: { $gte: todayStart, $lte: todayEnd },
+    });
+
+    const totalTasks = allTodayTasks.length;
+    const completedTasks = allTodayTasks.filter(
+      (t) => t.status === "completed"
+    ).length;
+
     return {
       success: true,
       message: "Admin dashboard fetched successfully",
@@ -218,6 +230,10 @@ export const getAdminDashboardService = async () => {
         properties: {
           total: totalProperties,
           active: activePropertiesCount,
+        },
+        tasks: {
+          total: totalTasks,
+          completed: completedTasks,
         },
       },
     };

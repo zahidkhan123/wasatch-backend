@@ -7,6 +7,7 @@ import {
 import {
   updateUserService,
   deleteUserService,
+  updateEmployeeService,
 } from "../../services/app/userService.js";
 import { UserType } from "../../types/enums.js";
 
@@ -15,6 +16,18 @@ export const updateUserController = catchAsync(
     const user_id = req.user?._id as string;
 
     const result = await updateUserService(user_id, req.body);
+    if (result.success) {
+      useSuccessResponse(res, result.message, result.data, result.statusCode);
+    } else {
+      useErrorResponse(res, result.message, result.statusCode);
+    }
+  }
+);
+
+export const updateEmployeeController = catchAsync(
+  async (req: Request, res: Response) => {
+    const employee_id = req.user?._id as string;
+    const result = await updateEmployeeService(employee_id, req.body);
     if (result.success) {
       useSuccessResponse(res, result.message, result.data, result.statusCode);
     } else {

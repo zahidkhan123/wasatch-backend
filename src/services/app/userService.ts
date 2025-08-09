@@ -47,6 +47,42 @@ export const updateUserService = async (
   }
 };
 
+interface updateEmployeeRequest {
+  firstName?: string;
+  lastName?: string;
+  phoneNumber?: string;
+  avatarUrl?: string;
+}
+
+export const updateEmployeeService = async (
+  userId: string,
+  data: updateEmployeeRequest
+) => {
+  try {
+    const user = await Employee.findByIdAndUpdate(userId, data, {
+      new: true,
+    }).select("-password -createdAt -updatedAt -routinePickup -notifications");
+    if (!user) {
+      return {
+        success: false,
+        message: responseMessages.employeeNotFound,
+        statusCode: 404,
+        data: null,
+      };
+    }
+    return {
+      success: true,
+      message: responseMessages.employeeUpdated,
+      statusCode: 200,
+      data: user,
+    };
+  } catch (error) {
+    throw new Error(
+      error instanceof Error ? error.message : "Error updating employee"
+    );
+  }
+};
+
 export const deleteUserService = async (
   userId: string,
   user_type: UserType,
