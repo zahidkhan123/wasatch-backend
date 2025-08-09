@@ -12,6 +12,7 @@ interface IEmployee extends Document {
   status: "on_duty" | "off_duty" | "late";
   role: "employee";
   currentAttendance?: Schema.Types.ObjectId;
+  avatarUrl: string;
   shiftStart: string;
   shiftEnd: string;
   lastCheckIn: Date;
@@ -41,6 +42,7 @@ const employeeSchema = new Schema<IEmployee>(
     },
     lastCheckIn: { type: Date },
     role: { type: String, enum: ["employee"], default: "employee" },
+    avatarUrl: { type: String, default: null },
     shiftStart: { type: String, required: true },
     shiftEnd: { type: String, required: true },
     deletedAt: { type: Date, default: null, index: true },

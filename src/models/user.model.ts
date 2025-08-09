@@ -25,6 +25,7 @@ export interface IUser extends Document {
     daysOfWeek: number[];
     defaultTime: string;
   };
+  avatarUrl: string;
   deletedAt: Date;
   createdAt: Date;
   updatedAt: Date;
@@ -58,6 +59,7 @@ const UserSchema = new Schema<IUser>(
       daysOfWeek: { type: [Number], default: [1, 3, 5] },
       defaultTime: { type: String, default: "10:00" },
     },
+    avatarUrl: { type: String, default: null },
     deletedAt: { type: Date, default: null, index: true },
   },
   { timestamps: true }
