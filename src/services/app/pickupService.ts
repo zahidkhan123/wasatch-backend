@@ -1,14 +1,12 @@
-import { PickupRequest } from "../../models/admin/PickupRequest.model";
-import { User } from "../../models/user.model";
+import { PickupRequest } from "../../models/admin/PickupRequest.model.js";
+import { User } from "../../models/user.model.js";
 import { sendNotification } from "../../utils/notification.js";
-import { Notification } from "../../models/notifications/notification.model.js";
 import { Types } from "mongoose";
 import dayjs from "dayjs";
 import { EmployeePropertyAssignment } from "../../models/admin/EmployeePropertyAssignment.js";
-import { Employee } from "../../models/employee/employee.model.js";
 import { Task } from "../../models/admin/task.model.js";
-import utc from "dayjs/plugin/utc";
-import timezone from "dayjs/plugin/timezone";
+import utc from "dayjs/plugin/utc.js";
+import timezone from "dayjs/plugin/timezone.js";
 import { getDayRangeInTZ } from "../../helpers/helperFunctions.js";
 
 dayjs.extend(utc);
@@ -29,7 +27,6 @@ export const createOnDemandPickup = async (
       dayjs().tz(APP_TZ).startOf("day").toISOString()
     );
     const user = await User.findById(userId).populate("property");
-    console.log("user", user);
     if (!user) {
       return {
         success: false,
