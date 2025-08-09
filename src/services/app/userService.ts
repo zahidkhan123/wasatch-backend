@@ -48,13 +48,12 @@ export const updateUserService = async (
       _id: user._id,
       firstName: user.profile?.firstName,
       lastName: user.profile?.lastName,
-      phoneNumber: user.profile?.phoneNumber,
       email: user.email,
       property: user.property
         ? {
-            _id: user.property._id,
-            name: user.property.name,
-            address: user.property.address,
+            _id: (user.property as any)._id,
+            name: (user.property as any).name,
+            address: (user.property as any).address,
           }
         : undefined,
       unitNumber: user.unitNumber,
@@ -115,8 +114,8 @@ export const updateEmployeeService = async (
       email: employee.email,
       assignedArea: employee.assignedArea
         ? {
-            _id: employee.assignedArea._id,
-            name: employee.assignedArea.name,
+            _id: (employee.assignedArea as any)._id,
+            name: (employee.assignedArea as any).name,
           }
         : undefined,
       role: employee.role,
