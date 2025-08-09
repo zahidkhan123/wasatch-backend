@@ -11,6 +11,7 @@ declare module "express-serve-static-core" {
   interface Request {
     user?: any;
     role?: string;
+    _id?: string;
   }
 }
 
@@ -30,8 +31,6 @@ export const authenticate = async (
 
     const token = authHeader.split(" ")[1];
     const decoded: any = jwt.verify(token, process.env.JWT_SECRET!);
-    console.log("decoded", decoded);
-    console.log("token", token);
     let user;
 
     switch (decoded.role) {
@@ -52,9 +51,9 @@ export const authenticate = async (
     if (!user) {
       return res.status(401).json({ message: "Unauthorized: User not found" });
     }
-
     req.user = user;
     req.role = decoded.role;
+    req._id = decoded.id;
     next();
   } catch (err) {
     console.error(err);

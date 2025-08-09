@@ -29,6 +29,7 @@ export interface IUser extends Document {
   createdAt: Date;
   updatedAt: Date;
   comparePassword(candidatePassword: string): Promise<boolean>;
+  softDelete(): Promise<void>;
 }
 
 const UserSchema = new Schema<IUser>(

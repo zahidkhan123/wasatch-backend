@@ -26,6 +26,8 @@ import employeeRoutes from "./routes/admin/employeeRoutes.js";
 import appEmployeeRoutes from "./routes/app/employeeRoutes.js";
 import attendenceRoutes from "./routes/admin/attendenceRoutes.js";
 import notificationSettingRoutes from "./routes/app/notificationSettingRoutes.js";
+import { startArchiveCleanupJob } from "./jobs/archiveCleanup.js";
+import adminFeedbackRoutes from "./routes/admin/adminFeedbackRoutes.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -66,7 +68,7 @@ app.set("view engine", "ejs");
 app.get("/", (req: Request, res: Response) => {
   res.send(`Server is listning on port ${port}`);
 });
-
+// startArchiveCleanupJob();
 // generateRoutinePickupsJob();
 
 app.use("/api/v1/auth", authRoutes);
@@ -83,6 +85,7 @@ app.use("/api/v1/feedback", feedbackRoutes);
 app.use("/api/v1/employee", appEmployeeRoutes);
 app.use("/api/v1/admin/attendence", attendenceRoutes);
 app.use("/api/v1/notification-settings", notificationSettingRoutes);
+app.use("/api/v1/admin/feedback", adminFeedbackRoutes);
 // app.use("/api/v1", googleMeetRoutes);
 app.use(errorHandler);
 const server = app.listen(port, () => {

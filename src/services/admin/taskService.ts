@@ -1,18 +1,14 @@
-import {
-  IPickupRequest,
-  PickupRequest,
-} from "../../models/admin/PickupRequest.model";
-import { Task, ITask } from "../../models/admin/task.model";
-import { FilterQuery, Types } from "mongoose";
-import { Employee } from "../../models/employee/employee.model";
-import { Property } from "../../models/admin/property.model";
-import { User } from "../../models/user.model";
+import { PickupRequest } from "../../models/admin/PickupRequest.model.js";
+import { Task } from "../../models/admin/task.model.js";
+import { Types } from "mongoose";
+import { Employee } from "../../models/employee/employee.model.js";
+import { Property } from "../../models/admin/property.model.js";
 import { EmployeePropertyAssignment } from "../../models/admin/EmployeePropertyAssignment.js";
 import { sendNotification } from "../../utils/notification.js";
 import { TemporaryAssignment } from "../../models/admin/TemporaryAssignmentModel.js";
 import { NotificationType } from "../../models/notifications/notification.model.js";
-import utc from "dayjs/plugin/utc";
-import timezone from "dayjs/plugin/timezone";
+import utc from "dayjs/plugin/utc.js";
+import timezone from "dayjs/plugin/timezone.js";
 import dayjs from "dayjs";
 import { getDayRangeInTZ } from "../../helpers/helperFunctions.js";
 dayjs.extend(utc);

@@ -9,6 +9,7 @@ import {
   resetUserPassword,
   verifyEmail,
   resendOTP,
+  deleteAccountService,
 } from "../../services/app/authService.js";
 import { catchAsync } from "../../utils/catch-async.js";
 import {
@@ -16,6 +17,7 @@ import {
   useErrorResponse,
 } from "../../utils/apiResponse.js";
 import { responseMessages } from "../../utils/responseMessages.js";
+import { UserType } from "../../types/enums.js";
 
 export const register = catchAsync(async (req: Request, res: Response) => {
   const result = await registerUser(req.body);
@@ -77,7 +79,6 @@ export const registerAdmin = catchAsync(async (req: Request, res: Response) => {
 });
 
 export const login = catchAsync(async (req: Request, res: Response) => {
-  console.log("req.body", req.body);
   const result = await loginUser(req.body);
 
   if (result.success) {
@@ -161,3 +162,15 @@ export const verifyEmailController = catchAsync(
     }
   }
 );
+
+export const deleteAccount = catchAsync(async (req: Request, res: Response) => {
+  const user_id = req._id as string;
+  const user_type = req.role as UserType;
+
+  const result = await deleteAccountService(user_id, user_type);
+  if (result.success) {
+    useSuccessResponse(res, result.message, result.data, result.statusCode);
+  } else {
+    useErrorResponse(res, result.message, result.statusCode);
+  }
+});

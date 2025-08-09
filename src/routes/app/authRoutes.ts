@@ -9,6 +9,7 @@ import {
   registerEmployee,
   registerAdmin,
   verifyEmailController,
+  deleteAccount,
 } from "../../controllers/app/authController.js";
 import {
   adminAuthMiddleware,
@@ -92,5 +93,7 @@ router.post(
   authorize as any,
   resetPassword
 );
+
+router.delete("/delete", authenticate as RequestHandler, deleteAccount as any);
 
 export default router;

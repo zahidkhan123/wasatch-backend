@@ -12,9 +12,12 @@ import {
   getEmployeeWorkHistory,
   FilterOption,
   deleteEmployeeAccountService,
-} from "../../services/app/employeeService";
-import { useErrorResponse, useSuccessResponse } from "../../utils/apiResponse";
-import { catchAsync } from "../../utils/catch-async";
+} from "../../services/app/employeeService.js";
+import {
+  useErrorResponse,
+  useSuccessResponse,
+} from "../../utils/apiResponse.js";
+import { catchAsync } from "../../utils/catch-async.js";
 
 const getEmployeeDashboardSummary = catchAsync(
   async (req: Request, res: Response) => {

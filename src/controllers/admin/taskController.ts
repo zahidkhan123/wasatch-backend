@@ -1,7 +1,10 @@
 import { Request, Response } from "express";
-import * as taskService from "../../services/admin/taskService";
-import { useErrorResponse, useSuccessResponse } from "../../utils/apiResponse";
-import { catchAsync } from "../../utils/catch-async";
+import * as taskService from "../../services/admin/taskService.js";
+import {
+  useErrorResponse,
+  useSuccessResponse,
+} from "../../utils/apiResponse.js";
+import { catchAsync } from "../../utils/catch-async.js";
 
 export const getTasks = catchAsync(async (req: Request, res: Response) => {
   const tasks = await taskService.getTasksService(req.query as any);

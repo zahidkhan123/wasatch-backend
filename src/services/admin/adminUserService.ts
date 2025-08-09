@@ -11,8 +11,8 @@ import dayjs from "dayjs";
 import { PickupRequest } from "../../models/admin/PickupRequest.model.js";
 import { Employee } from "../../models/employee/employee.model.js";
 import { Property } from "../../models/admin/property.model.js";
-import utc from "dayjs/plugin/utc";
-import timezone from "dayjs/plugin/timezone";
+import utc from "dayjs/plugin/utc.js";
+import timezone from "dayjs/plugin/timezone.js";
 dayjs.extend(utc);
 dayjs.extend(timezone);
 

@@ -17,6 +17,7 @@ interface IEmployee extends Document {
   lastCheckIn: Date;
   comparePassword(candidatePassword: string): Promise<boolean>;
   deletedAt: Date;
+  softDelete(): Promise<void>;
 }
 
 const employeeSchema = new Schema<IEmployee>(

@@ -12,7 +12,7 @@ import { Employee, IEmployee } from "../../models/employee/employee.model.js";
 import { Admin, IAdmin } from "../../models/admin/admin.model.js";
 import { Property } from "../../models/admin/property.model.js";
 import { EmployeePropertyAssignment } from "../../models/admin/EmployeePropertyAssignment.js";
-
+import { Archive } from "../../models/archive/archive.model.js";
 export const registerUser = async (userData: IUser): Promise<any> => {
   return runInTransaction(async (session) => {
     const otp = generateOTP().toString();
@@ -410,4 +410,58 @@ export const verifyEmail = async (user_id: string, email: string) => {
     success: true,
     data: null,
   };
+};
+
+export const deleteAccountService = async (
+  userId: string,
+  user_type: UserType
+) => {
+  try {
+    const user = await User.findById(userId);
+    const employee = await Employee.findById(userId);
+    const admin = await Admin.findById(userId);
+
+    if (!user && !employee && !admin) {
+      return {
+        success: false,
+        message: "User not found or not authorized to delete account",
+        statusCode: 404,
+      };
+    }
+
+    if (
+      user_type === "user" &&
+      (user as { _id: string })._id.toString() === userId
+    ) {
+      await Archive.save("User", user as unknown as IUser);
+      await user?.softDelete();
+    } else if (
+      user_type === "employee" &&
+      (employee as { _id: string })._id.toString() === userId
+    ) {
+      await Archive.save("Employee", employee as unknown as IEmployee);
+      await employee?.softDelete();
+    } else {
+      return {
+        success: false,
+        message: "User not found or not authorized to delete account",
+        statusCode: 404,
+      };
+    }
+
+    return {
+      success: true,
+      message: "Account deleted successfully",
+      statusCode: 200,
+      data: null,
+    };
+  } catch (error: any) {
+    console.error("Error deleting account:", error);
+    return {
+      success: false,
+      message: "Failed to delete account.",
+      error: error.message,
+      statusCode: 500,
+    };
+  }
 };

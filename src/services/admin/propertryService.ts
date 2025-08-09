@@ -1,4 +1,4 @@
-import { IProperty, Property } from "../../models/admin/property.model";
+import { IProperty, Property } from "../../models/admin/property.model.js";
 
 export const createPropertyService = async (
   data: Partial<IProperty>,

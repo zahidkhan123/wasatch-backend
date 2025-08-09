@@ -1,5 +1,5 @@
-import { Feedback } from "../../models/Feedback/feedback.model";
-import { User } from "../../models/user.model";
+import { Feedback } from "../../models/Feedback/feedback.model.js";
+import { User } from "../../models/user.model.js";
 import { Types } from "mongoose";
 
 interface CreateFeedbackInput {

@@ -1,4 +1,6 @@
 import { model, Schema } from "mongoose";
+import { Employee } from "../employee/employee.model.js";
+import { User } from "../user.model.js";
 
 const ArchiveSchema = new Schema(
   {
@@ -17,7 +19,23 @@ export const Archive = {
   },
 
   cleanupOld: async () => {
-    const threeMonthsAgo = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000);
-    await ArchiveModel.deleteMany({ deletedAt: { $lt: threeMonthsAgo } });
+    const threshold = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000);
+    // Only select users who have been soft-deleted (deletedAt exists and is older than threshold)
+    const oldUsers = await User.find({
+      deletedAt: { $exists: true, $lte: threshold },
+    });
+    for (const user of oldUsers) {
+      await User.findByIdAndDelete(user._id);
+      await ArchiveModel.deleteMany({ "data._id": user._id });
+    }
+
+    // Only select employees who have been soft-deleted (deletedAt exists and is older than threshold)
+    const oldEmployees = await Employee.find({
+      deletedAt: { $exists: true, $lte: threshold },
+    });
+    for (const emp of oldEmployees) {
+      await Employee.findByIdAndDelete(emp._id);
+      await ArchiveModel.deleteMany({ "data._id": emp._id });
+    }
   },
 };

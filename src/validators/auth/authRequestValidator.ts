@@ -119,24 +119,20 @@ export const registerEmployeeSchema = Joi.object({
   active: Joi.boolean().optional(),
   // Allow shiftStart and shiftEnd to be in 24-hour or 12-hour (AM/PM) format
   shiftStart: Joi.string()
-    .regex(
-      /^((([01]?[0-9]|2[0-3]):[0-5][0-9])|((0?[1-9]|1[0-2]):[0-5][0-9]\s?(AM|PM|am|pm)))$/
-    )
+    .regex(/^([01]?[0-9]|2[0-3]):[0-5][0-9]$/)
     .required()
     .messages({
       "string.empty": "Shift start time is required",
       "string.pattern.base":
-        "Invalid shift start time. Use HH:mm (24-hour) or HH:mm AM/PM (12-hour) format.",
+        "Invalid shift start time. Use HH:mm (24-hour) format, e.g., 09:00 or 13:00.",
     }),
   shiftEnd: Joi.string()
-    .regex(
-      /^((([01]?[0-9]|2[0-3]):[0-5][0-9])|((0?[1-9]|1[0-2]):[0-5][0-9]\s?(AM|PM|am|pm)))$/
-    )
+    .regex(/^([01]?[0-9]|2[0-3]):[0-5][0-9]$/)
     .required()
     .messages({
       "string.empty": "Shift end time is required",
       "string.pattern.base":
-        "Invalid shift end time. Use HH:mm (24-hour) or HH:mm AM/PM (12-hour) format.",
+        "Invalid shift end time. Use HH:mm (24-hour) format, e.g., 09:00 or 13:00.",
     }),
 });
 
