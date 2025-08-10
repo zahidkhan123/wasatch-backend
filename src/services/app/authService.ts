@@ -13,6 +13,8 @@ import { Admin, IAdmin } from "../../models/admin/admin.model.js";
 import { Property } from "../../models/admin/property.model.js";
 import { EmployeePropertyAssignment } from "../../models/admin/EmployeePropertyAssignment.js";
 import { Archive } from "../../models/archive/archive.model.js";
+import { NotificationSettingModel } from "../../models/notifications/notificationSettings.model.js";
+
 export const registerUser = async (userData: IUser): Promise<any> => {
   return runInTransaction(async (session) => {
     const otp = generateOTP().toString();
@@ -38,6 +40,19 @@ export const registerUser = async (userData: IUser): Promise<any> => {
         {
           ...userData,
           property: property._id,
+        },
+      ],
+      { session }
+    );
+
+    // Create notification settings for the new user
+    await NotificationSettingModel.create(
+      [
+        {
+          userId: user._id,
+          role: "user",
+          issueUpdates: true,
+          taskStatus: true,
         },
       ],
       { session }
@@ -100,6 +115,18 @@ export const registerEmployeeService = async (
       role: "employee",
     });
     await employee.save();
+
+    // Create notification settings for the new employee
+    await NotificationSettingModel.create({
+      userId: employee._id,
+      role: "employee",
+      // Default settings, can be customized as needed
+      newTaskAssigned: true,
+      issueUpdates: true,
+      taskStatus: true,
+      clockInOutReminders: false,
+      adminInstructions: false,
+    });
 
     // 3. Create primary assignment record
     await new EmployeePropertyAssignment({

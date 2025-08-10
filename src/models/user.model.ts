@@ -25,6 +25,8 @@ export interface IUser extends Document {
     daysOfWeek: number[];
     defaultTime: string;
   };
+  fcmTokens: { type: [string]; default: [] };
+  platforms: { type: [string]; default: [] };
   avatarUrl: string;
   deletedAt: Date;
   createdAt: Date;
@@ -59,6 +61,8 @@ const UserSchema = new Schema<IUser>(
       daysOfWeek: { type: [Number], default: [1, 3, 5] },
       defaultTime: { type: String, default: "10:00" },
     },
+    fcmTokens: { type: [String], default: [] },
+    platforms: { type: [String], default: [] },
     avatarUrl: { type: String, default: null },
     deletedAt: { type: Date, default: null, index: true },
   },

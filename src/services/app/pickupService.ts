@@ -34,7 +34,6 @@ export const createOnDemandPickup = async (
         statusCode: 404,
       };
     }
-    console.log(user.property?._id);
     const assignments = await EmployeePropertyAssignment.find({
       propertyId: user.property?._id,
       validFrom: { $lte: today.start },

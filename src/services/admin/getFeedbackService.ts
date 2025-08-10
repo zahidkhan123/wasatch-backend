@@ -7,27 +7,30 @@ dayjs.extend(timezone);
 
 const getFeedbackService = async () => {
   try {
-    const feedback = await Feedback.find().populate("userId");
+    const feedback = await Feedback.find().populate(
+      "userId",
+      "profile.firstName profile.lastName email"
+    );
 
-    const formattedFeedback = feedback.map((feedback) => {
-      return {
-        _id: feedback._id,
-        rating: feedback.rating,
-        pickupTimes: feedback.pickupTimes,
-        supportSystem: feedback.supportSystem,
-        staffPerformance: feedback.staffPerformance,
-        comment: feedback.comment,
-        createdAt: feedback.createdAt,
-        profile: (feedback.userId as any)?.profile,
-      };
-    });
+    // const formattedFeedback = feedback.map((feedback) => {
+    //   return {
+    //     _id: feedback._id,
+    //     rating: feedback.rating,
+    //     pickupTimes: feedback.pickupTimes,
+    //     supportSystem: feedback.supportSystem,
+    //     staffPerformance: feedback.staffPerformance,
+    //     comment: feedback.comment,
+    //     createdAt: feedback.createdAt,
+    //     profile: (feedback.userId as any)?.profile,
+    //   };
+    // });
 
     return {
       success: true,
       message: "Feedback fetched successfully",
       statusCode: 200,
       data: {
-        feedback: formattedFeedback,
+        feedback: feedback,
       },
     };
   } catch (error) {

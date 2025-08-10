@@ -12,6 +12,8 @@ import { NotificationSettingModel } from "../../models/notifications/notificatio
 import { sendNotification } from "../../utils/notification.js";
 import { NotificationType } from "../../models/notifications/notification.model.js";
 import { IssueModel } from "../../models/employee/IssueReport.model.js";
+import { sendFCMNotification } from "../../utils/sendFCM.js";
+import { User } from "../../models/user.model.js";
 dayjs.extend(utc);
 dayjs.extend(timezone);
 const APP_TZ = "America/New_York";
@@ -303,9 +305,15 @@ const endTask = async (taskId: string, employeeId: string) => {
         success: false,
       };
     }
+
+    // Find the notification settings for the user and populate the user details (including fcmTokens)
     const notificationSetting = await NotificationSettingModel.findOne({
       userId: (task.requestId as any).userId,
-    }).select("issueUpdate taskStatus");
+      role: "user",
+    })
+      .select("issueUpdates taskStatus userId")
+      .populate("userId", "fcmTokens");
+
     // Check if current time is within scheduledStart and scheduledEnd
     if (now < task.scheduledStart || now > task.scheduledEnd) {
       return {
@@ -323,8 +331,14 @@ const endTask = async (taskId: string, employeeId: string) => {
         (task.requestId as any).userId.toString(),
         "user",
         "Your task has been completed",
-        "task_alert" as NotificationType
+        "task_completed" as NotificationType
       );
+
+      sendFCMNotification({
+        title: "Your task has been completed",
+        body: "Your task has been completed",
+        tokens: (notificationSetting?.userId as any)?.fcmTokens || [],
+      });
     }
     return {
       message: "Task completed successfully",

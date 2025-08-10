@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import {
   createComplaintService,
   getComplaintService,
+  getAllComplaintsService,
 } from "../../services/app/complaintService.js";
 import {
   useErrorResponse,
@@ -33,6 +34,18 @@ export const getComplaintController = async (req: Request, res: Response) => {
   const user_id = req.user?._id;
 
   const help = await getComplaintService(user_id);
+  if (help.success) {
+    useSuccessResponse(res, help.message, help.data, help.statusCode);
+  } else {
+    useErrorResponse(res, help.message, help.statusCode);
+  }
+};
+
+export const getAllComplaintsController = async (
+  req: Request,
+  res: Response
+) => {
+  const help = await getAllComplaintsService();
   if (help.success) {
     useSuccessResponse(res, help.message, help.data, help.statusCode);
   } else {

@@ -22,7 +22,10 @@ export const loginUser = async ({
   password,
   role,
 }: LoginCredentials) => {
-  const user = await Admin.findOne({ email, role: role });
+  const user = await Admin.findOne({
+    email: email.toLowerCase(),
+    role: role,
+  });
 
   if (!user) {
     return {

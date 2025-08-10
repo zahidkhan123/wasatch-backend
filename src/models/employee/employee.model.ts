@@ -16,6 +16,8 @@ interface IEmployee extends Document {
   shiftStart: string;
   shiftEnd: string;
   lastCheckIn: Date;
+  fcmTokens: { type: [string]; default: [] };
+  platforms: { type: [string]; default: [] };
   comparePassword(candidatePassword: string): Promise<boolean>;
   deletedAt: Date;
   softDelete(): Promise<void>;
@@ -46,6 +48,8 @@ const employeeSchema = new Schema<IEmployee>(
     shiftStart: { type: String, required: true },
     shiftEnd: { type: String, required: true },
     deletedAt: { type: Date, default: null, index: true },
+    fcmTokens: { type: [String], default: [] },
+    platforms: { type: [String], default: [] },
   },
   { timestamps: true }
 );

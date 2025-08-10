@@ -12,6 +12,7 @@ export type NotificationType =
   | "check_out"
   | "pickup_missed"
   | "pickup_delayed"
+  | "task_completed"
   | "rent_due"
   | "app_feature";
 
@@ -27,6 +28,7 @@ const notificationTypeEnum = [
   "check_out",
   "pickup_missed",
   "pickup_delayed",
+  "task_completed",
   "rent_due",
   "app_feature",
 ];

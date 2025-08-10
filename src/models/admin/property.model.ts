@@ -4,7 +4,7 @@ interface IProperty extends Document {
   name: string;
   units: number;
   managerName: string;
-  email: string;
+  emailAddress: string;
   phone: string;
   accessCode: string;
   location: {
@@ -21,7 +21,7 @@ const propertySchema = new Schema<IProperty>(
     name: { type: String, required: true },
     units: Number,
     managerName: String,
-    email: String,
+    emailAddress: String,
     phone: String,
     accessCode: String,
     location: {

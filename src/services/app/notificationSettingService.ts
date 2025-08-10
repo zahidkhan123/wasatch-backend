@@ -1,4 +1,4 @@
-import { Notification } from "../../models/notifications/notification.model.js";
+import { NotificationSettingModel } from "../../models/notifications/notificationSettings.model.js";
 
 /**
  * Get notification settings for a user.
@@ -10,11 +10,11 @@ export const getNotificationSettingService = async (
   try {
     let setting;
     if (userType === "user") {
-      setting = await Notification.findOne({ userId }).select(
+      setting = await NotificationSettingModel.findOne({ userId }).select(
         "issueUpdates taskStatus"
       );
     } else {
-      setting = await Notification.findOne({ userId }).select(
+      setting = await NotificationSettingModel.findOne({ userId }).select(
         "-_id -__v -createdAt -updatedAt -userId -role"
       );
     }
@@ -42,7 +42,7 @@ export const updateNotificationSettingService = async (
   update: any
 ) => {
   try {
-    const setting = await Notification.findOneAndUpdate(
+    const setting = await NotificationSettingModel.findOneAndUpdate(
       { userId },
       { ...update },
       { new: true, upsert: true }

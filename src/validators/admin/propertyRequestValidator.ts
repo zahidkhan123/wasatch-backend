@@ -7,9 +7,10 @@ export const createPropertySchema = Joi.object({
     "string.min": "Property name must be at least 3 characters",
     "string.max": "Property name cannot exceed 100 characters",
   }),
-  address: Joi.string().min(5).max(255).required().messages({
-    "string.empty": "Address is required",
-    "any.required": "Address is required",
+  emailAddress: Joi.string().email().min(5).max(255).required().messages({
+    "string.empty": "Email address is required",
+    "any.required": "Email address is required",
+    "string.email": "Invalid email address",
   }),
   managerName: Joi.string().min(2).max(50).required().messages({
     "string.empty": "Manager name is required",
@@ -47,9 +48,10 @@ export const updatePropertySchema = Joi.object({
     "string.min": "Property name must be at least 3 characters",
     "string.max": "Property name cannot exceed 100 characters",
   }),
-  address: Joi.string().min(5).max(255).optional().messages({
-    "string.min": "Address must be at least 5 characters",
-    "string.max": "Address cannot exceed 255 characters",
+  emailAddress: Joi.string().email().min(5).max(255).optional().messages({
+    "string.min": "Email address must be at least 5 characters",
+    "string.max": "Email address cannot exceed 255 characters",
+    "string.email": "Invalid email address",
   }),
   managerName: Joi.string().min(2).max(50).optional().messages({
     "string.min": "Manager name must be at least 2 characters",

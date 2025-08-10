@@ -1,4 +1,7 @@
 import { Notification } from "../../models/notifications/notification.model.js";
+import { User } from "../../models/user.model.js";
+import { Employee } from "../../models/employee/employee.model.js";
+import admin from "firebase-admin";
 
 export const getNotifications = async (user_id: string) => {
   try {
@@ -64,6 +67,64 @@ export const markAllNotificationsAsReadService = async (userId: string) => {
     return {
       success: false,
       message: "Failed to mark all notifications as read",
+      statusCode: 500,
+      error,
+    };
+  }
+};
+
+export const sendNotificationService = async (
+  user_id: string,
+  userType: string,
+  title: string,
+  body: string
+) => {
+  try {
+    let message: any;
+    if (userType === "user") {
+      const user = await User.findOne({ _id: user_id });
+      if (!user || !user.fcmTokens) {
+        return {
+          success: false,
+          message: "User or FCM token not found",
+          statusCode: 404,
+        };
+      }
+      message = {
+        tokens: user.fcmTokens,
+        notification: { title, body },
+        // data: { click_action: "FLUTTER_NOTIFICATION_CLICK" }, // optional
+      };
+    } else {
+      const employee = await Employee.findOne({ _id: user_id });
+      if (!employee || !employee.fcmTokens) {
+        return {
+          success: false,
+          message: "Employee or FCM token not found",
+          statusCode: 404,
+        };
+      }
+      message = {
+        tokens: employee.fcmTokens,
+        notification: { title, body },
+        // data: { click_action: "FLUTTER_NOTIFICATION_CLICK" }, // optional
+      };
+    }
+
+    const response = await admin.messaging().sendEachForMulticast(message);
+    console.log(response);
+
+    return {
+      success: true,
+      message: "Notification sent",
+      statusCode: 200,
+      data: null,
+    };
+  } catch (error) {
+    console.error("Error sending notification:", error);
+    return {
+      success: false,
+      message: "Failed to send notification",
       statusCode: 500,
       error,
     };

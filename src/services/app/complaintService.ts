@@ -54,3 +54,27 @@ export const getComplaintService = async (userId: string) => {
     };
   }
 };
+
+export const getAllComplaintsService = async () => {
+  try {
+    const complaints = await ComplaintModel.find()
+      .select("-__v -updatedAt")
+      .sort({
+        createdAt: -1,
+      })
+      .populate("userId", "profile.firstName profile.lastName email");
+    return {
+      success: true,
+      statusCode: 200,
+      message: "Complaints fetched successfully",
+      data: complaints,
+    };
+  } catch (error) {
+    return {
+      success: false,
+      statusCode: 500,
+      message: (error as Error).message,
+      data: null,
+    };
+  }
+};

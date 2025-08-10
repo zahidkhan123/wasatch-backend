@@ -4,6 +4,7 @@ import {
   getNotifications,
   updateNotification,
   markAllNotificationsAsReadService,
+  sendNotificationService,
 } from "../../services/app/notificationService.js";
 import {
   useErrorResponse,
@@ -71,3 +72,32 @@ export const markAllNotificationsAsReadController = async (
     useErrorResponse(res, "Server error", 500);
   }
 };
+
+export const sendNotificationController = catchAsync(
+  async (req: Request, res: Response) => {
+    const user_id = req.user?._id as string;
+    const userType = req.user?.role;
+    console.log(user_id, userType);
+    const { title, body } = req.body;
+    const notifications = await sendNotificationService(
+      user_id,
+      userType,
+      title,
+      body
+    );
+    if (notifications.success) {
+      useSuccessResponse(
+        res,
+        "Notification sent successfully",
+        notifications,
+        200
+      );
+    } else {
+      useErrorResponse(
+        res,
+        notifications.message,
+        notifications.statusCode || 400
+      );
+    }
+  }
+);
