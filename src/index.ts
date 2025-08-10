@@ -28,7 +28,6 @@ import attendenceRoutes from "./routes/admin/attendenceRoutes.js";
 import notificationSettingRoutes from "./routes/app/notificationSettingRoutes.js";
 import adminFeedbackRoutes from "./routes/admin/adminFeedbackRoutes.js";
 import fcmRoutes from "./routes/app/fcmRoutes.js";
-import "./utils/firebase.js";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 

@@ -1,4 +1,4 @@
-import admin from "./firebase";
+import admin from "./firebase.js";
 
 interface FCMNotificationPayload {
   title: string;
