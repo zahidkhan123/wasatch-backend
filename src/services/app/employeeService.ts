@@ -15,6 +15,7 @@ import { IssueModel } from "../../models/employee/IssueReport.model.js";
 import { sendFCMNotification } from "../../utils/sendFCM.js";
 import { User } from "../../models/user.model.js";
 import { TemporaryAssignment } from "../../models/admin/TemporaryAssignmentModel.js";
+import { PickupRequest } from "../../models/admin/PickupRequest.model.js";
 dayjs.extend(utc);
 dayjs.extend(timezone);
 const APP_TZ = "America/New_York";
@@ -50,6 +51,7 @@ const getDashboardSummary = async (employeeId: string) => {
       ...baseQuery,
       status: "pending",
     })
+      .populate("requestId", "type timeSlot date userId specialInstructions")
       .sort({ scheduledStart: 1 }) // sort by soonest first
       .limit(2);
 
@@ -265,16 +267,16 @@ const startTask = async (taskId: string, employeeId: string) => {
     task.actualStart = now;
     task.status = "in_progress";
     await task.save();
-    if (notificationSetting?.taskStatus) {
-      await sendNotification(
-        (task.requestId as any).userId.toString(),
-        "user",
-        "Civil.png",
-        "Task Started",
-        "Your task has been started",
-        "task_alert" as NotificationType
-      );
-    }
+    // if (notificationSetting?.taskStatus) {
+    //   await sendNotification(
+    //     (task.requestId as any).userId.toString(),
+    //     "user",
+    //     "Civil.png",
+    //     "Task Started",
+    //     "Your task has been started",
+    //     "task_alert" as NotificationType
+    //   );
+    // }
     return {
       message: "Task started successfully",
       data: task,
@@ -328,12 +330,17 @@ const endTask = async (taskId: string, employeeId: string) => {
 
     task.actualEnd = now;
     task.status = "completed";
+
+    await PickupRequest.updateOne(
+      { _id: (task.requestId as any)._id },
+      { $set: { status: "completed" } }
+    );
     await task.save();
     if (notificationSetting?.taskStatus) {
       await sendNotification(
         (task.requestId as any).userId.toString(),
         "user",
-        "Civil.png",
+        "check.png",
         "Task Completed",
         "Your task has been completed",
         "task_completed" as NotificationType
@@ -396,7 +403,7 @@ const delayTask = async (taskId: string, employeeId: string) => {
       await sendNotification(
         (task.requestId as any).userId.toString(),
         "user",
-        "Civil.png",
+        "alert.png",
         "Task Delayed",
         "Your task has been delayed",
         "task_alert" as NotificationType
@@ -1072,6 +1079,35 @@ const deleteEmployeeAccountService = async (employeeId: string) => {
   }
 };
 
+const getEmployeeCheckInStatus = async (employeeId: string) => {
+  const employee = await Employee.findById(employeeId);
+  if (!employee) {
+    return {
+      success: false,
+      message: "Employee not found",
+      statusCode: 404,
+    };
+  }
+  const attendance = await Attendance.findOne({
+    employeeId: new Types.ObjectId(employeeId),
+    shiftDate: dayjs().tz(APP_TZ).startOf("day").toDate(),
+  });
+
+  if (!attendance) {
+    return {
+      success: false,
+      message: "No attendance found for today",
+      statusCode: 404,
+    };
+  }
+
+  return {
+    success: true,
+    message: "Check-in status fetched successfully",
+    statusCode: 200,
+    data: attendance.clockIn ? true : false,
+  };
+};
 export {
   getDashboardSummary,
   getEmployeeTasks,
@@ -1084,4 +1120,5 @@ export {
   reportIssueTask,
   getEmployeeWorkHistory,
   deleteEmployeeAccountService,
+  getEmployeeCheckInStatus,
 };

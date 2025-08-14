@@ -87,7 +87,7 @@ export const createOnDemandPickup = async (
         await sendNotification(
           empId.toString(),
           "employee",
-          "Civil.png",
+          "pickup.png",
           "Pickup Status",
           `A new pickup at ${pickup.unitNumber}, ${pickup.buildingNumber}, ${pickup.apartmentName} has been assigned.`,
           "pickup_status"
@@ -99,7 +99,7 @@ export const createOnDemandPickup = async (
     await sendNotification(
       (user as { _id: Types.ObjectId })._id.toString(),
       "user",
-      "Civil.png",
+      "pickup.png",
       "Pickup Status",
       "Your pickup has been scheduled and will be handled shortly.",
       "pickup_status"
@@ -266,4 +266,35 @@ export const getPickupRequests = async ({
       statusCode: 500,
     };
   }
+};
+
+export const getUserDashboardPickupData = async (userId: string) => {
+  // Fetch recent pickups (latest first)
+  const recentPickups = await PickupRequest.find({ userId })
+    .sort({ date: -1 })
+    .limit(5) // You can adjust how many recent pickups you want to return
+    .select(
+      "date status unitNumber buildingName timeSlot type specialInstructions apartmentName"
+    );
+
+  // Fetch the next scheduled routine pickup
+  const nextRoutinePickup = await PickupRequest.findOne({
+    userId,
+    status: "scheduled",
+    date: { $gte: new Date() }, // Future pickups only
+  })
+    .sort({ date: 1 }) // Nearest upcoming
+    .select(
+      "date status type unitNumber buildingName timeSlot specialInstructions apartmentName"
+    );
+
+  return {
+    success: true,
+    message: "Pickup data fetched successfully.",
+    statusCode: 200,
+    data: {
+      nextRoutinePickup,
+      recentPickups,
+    },
+  };
 };

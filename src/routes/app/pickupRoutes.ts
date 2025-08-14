@@ -8,6 +8,7 @@ import { pickupRequestSchema } from "../../validators/user/userRequestValidator.
 import {
   getPickupRequestsController,
   pickupRequestController,
+  getUserDashboardPickupDataController,
 } from "../../controllers/app/pickupController.js";
 
 const router = Router();
@@ -23,6 +24,12 @@ router.get(
   "/requests",
   userAuthMiddleware as any,
   getPickupRequestsController as any
+);
+
+router.get(
+  "/dashboard",
+  userAuthMiddleware as any,
+  getUserDashboardPickupDataController as any
 );
 
 export default router;

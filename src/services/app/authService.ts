@@ -203,7 +203,7 @@ export const loginUser = async ({
   } else if (role === "employee") {
     model = Employee;
     selectFields =
-      "firstName lastName email phone employeeId assignedArea role active password";
+      "firstName lastName email phone employeeId assignedArea role active password shiftStart shiftEnd";
     populateOptions = {
       path: "assignedArea",
       model: "Property",

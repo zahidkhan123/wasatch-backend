@@ -216,7 +216,7 @@ export const createAndAssignTaskManually = async (
     await sendNotification(
       (employee as any)._id.toString(),
       "employee",
-      "Civil.png",
+      "pickup.png",
       "Task Assignment",
       `New task assigned at ${unitNumber}, ${buildingName}${
         isTemporaryAssignment ? " (Temporary Assignment)" : ""

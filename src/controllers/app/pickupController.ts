@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import {
   createOnDemandPickup,
   getPickupRequests,
+  getUserDashboardPickupData,
 } from "../../services/app/pickupService.js";
 import {
   useErrorResponse,
@@ -40,6 +41,24 @@ export const getPickupRequestsController = async (
     limit: Number(req.query.limit) || 10,
     date: req.query.date as string,
   });
+  if (response.success) {
+    useSuccessResponse(
+      res,
+      response.message,
+      response.data,
+      response.statusCode || 200
+    );
+  } else {
+    useErrorResponse(res, response.message, response.statusCode || 400);
+  }
+};
+
+export const getUserDashboardPickupDataController = async (
+  req: Request,
+  res: Response
+) => {
+  const userId = req.user?._id.toString();
+  const response = await getUserDashboardPickupData(userId);
   if (response.success) {
     useSuccessResponse(
       res,

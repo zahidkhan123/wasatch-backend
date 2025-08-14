@@ -12,6 +12,7 @@ import {
   getEmployeeWorkHistory,
   FilterOption,
   deleteEmployeeAccountService,
+  getEmployeeCheckInStatus,
 } from "../../services/app/employeeService.js";
 import {
   useErrorResponse,
@@ -145,6 +146,18 @@ const deleteEmployeeAccount = catchAsync(
   }
 );
 
+const getEmployeeCheckInStatusController = catchAsync(
+  async (req: Request, res: Response) => {
+    const employee_id = req.user?._id as string;
+    const result = await getEmployeeCheckInStatus(employee_id);
+    if (result.success) {
+      useSuccessResponse(res, result.message, result.data, result.statusCode);
+    } else {
+      useErrorResponse(res, result.message, result.statusCode);
+    }
+  }
+);
+
 export {
   getEmployeeDashboardSummary,
   getEmployeeTasksList,
@@ -157,4 +170,5 @@ export {
   reportIssueEmployeeTask,
   getWorkHistory,
   deleteEmployeeAccount,
+  getEmployeeCheckInStatusController,
 };

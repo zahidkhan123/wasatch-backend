@@ -11,6 +11,7 @@ import {
   reportIssueEmployeeTask,
   getWorkHistory,
   deleteEmployeeAccount,
+  getEmployeeCheckInStatusController,
 } from "../../controllers/app/employeeController.js";
 import {
   employeeAuthMiddleware,
@@ -50,6 +51,13 @@ router.get(
   authenticate as RequestHandler,
   employeeAuthMiddleware as any,
   getEmployeeTaskById
+);
+
+router.get(
+  "/check-in-status",
+  authenticate as RequestHandler,
+  employeeAuthMiddleware as any,
+  getEmployeeCheckInStatusController
 );
 
 router.post(
