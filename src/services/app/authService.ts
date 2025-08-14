@@ -73,6 +73,8 @@ export const registerUser = async (userData: IUser): Promise<any> => {
     await sendNotification(
       (user as unknown as IUser)._id.toString() as string,
       "user",
+      "Civil.png",
+      "Account Created",
       "Your account has been created successfully.",
       "admin_alert"
     );
@@ -391,6 +393,8 @@ export const resetUserPassword = async (
   await sendNotification(
     (user as unknown as IUser)._id.toString() as string,
     "user",
+    "Civil.png",
+    "Password Reset",
     "Your password has been reset successfully",
     "admin_alert"
   );

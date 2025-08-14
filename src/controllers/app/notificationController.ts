@@ -18,7 +18,7 @@ export const getNotificationsController = catchAsync(
       useSuccessResponse(
         res,
         "Notifications fetched successfully",
-        notifications,
+        notifications.data,
         200
       );
     } else {

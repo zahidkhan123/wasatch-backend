@@ -37,7 +37,9 @@ interface INotification extends Document {
   recipientId: Schema.Types.ObjectId;
   role: "user" | "employee";
   type: NotificationType;
+  title: string;
   message: string;
+  image: string;
   status: "read" | "unread";
   createdAt: Date;
 }
@@ -46,6 +48,8 @@ const notificationSchema = new Schema<INotification>(
   {
     recipientId: { type: Schema.Types.ObjectId, required: true },
     role: { type: String, enum: ["user", "employee"], required: true },
+    title: { type: String, required: false },
+    image: { type: String, required: false },
     type: {
       type: String,
       enum: notificationTypeEnum,

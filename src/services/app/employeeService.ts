@@ -14,6 +14,7 @@ import { NotificationType } from "../../models/notifications/notification.model.
 import { IssueModel } from "../../models/employee/IssueReport.model.js";
 import { sendFCMNotification } from "../../utils/sendFCM.js";
 import { User } from "../../models/user.model.js";
+import { TemporaryAssignment } from "../../models/admin/TemporaryAssignmentModel.js";
 dayjs.extend(utc);
 dayjs.extend(timezone);
 const APP_TZ = "America/New_York";
@@ -268,6 +269,8 @@ const startTask = async (taskId: string, employeeId: string) => {
       await sendNotification(
         (task.requestId as any).userId.toString(),
         "user",
+        "Civil.png",
+        "Task Started",
         "Your task has been started",
         "task_alert" as NotificationType
       );
@@ -330,6 +333,8 @@ const endTask = async (taskId: string, employeeId: string) => {
       await sendNotification(
         (task.requestId as any).userId.toString(),
         "user",
+        "Civil.png",
+        "Task Completed",
         "Your task has been completed",
         "task_completed" as NotificationType
       );
@@ -391,6 +396,8 @@ const delayTask = async (taskId: string, employeeId: string) => {
       await sendNotification(
         (task.requestId as any).userId.toString(),
         "user",
+        "Civil.png",
+        "Task Delayed",
         "Your task has been delayed",
         "task_alert" as NotificationType
       );
@@ -478,7 +485,7 @@ const checkIn = async (
       status: "pending",
       scheduledStart: { $gte: todayStart, $lte: todayEnd },
     });
-
+    console.log("task", task);
     const assignment = await EmployeePropertyAssignment.findOne({
       employeeId: new Types.ObjectId(employeeId),
       propertyId: new Types.ObjectId(propertyId),
@@ -486,7 +493,16 @@ const checkIn = async (
       $or: [{ validUntil: null }, { validUntil: { $gte: todayEnd } }],
     });
 
-    if (!task && !assignment) {
+    const tempAssignment = await TemporaryAssignment.create({
+      employeeId,
+      propertyId,
+      startDate: todayStart,
+      endDate: todayEnd,
+      assignedBy: new Types.ObjectId(employeeId),
+      reason: "User requested task",
+    });
+    console.log("assignment", assignment, tempAssignment);
+    if (!task && !assignment && !tempAssignment) {
       return {
         success: false,
         message:

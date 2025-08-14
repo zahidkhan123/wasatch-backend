@@ -71,6 +71,8 @@ export const generateRoutinePickupsJob = () => {
         await sendNotification(
           (user as { _id: string })._id,
           "user",
+          "Civil.png",
+          "Routine Pickup",
           `We will collect your trash on ${dayjs(scheduledDate).format(
             "DD MMM YYYY"
           )} at ${pickupTime}.`,

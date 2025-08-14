@@ -9,10 +9,14 @@ import {
  * @param role - 'user' or 'employee'
  * @param message - Body of the notification
  * @param type - Type of the notification (e.g. pickup_status, shift_reminder)
+ * @param title - Optional notification title
+ * @param image - Optional image URL for the notification
  */
 export const sendNotification = async (
   recipientId: string,
   role: "user" | "employee",
+  image: string,
+  title: string,
   message: string,
   type: NotificationType
 ) => {
@@ -21,12 +25,21 @@ export const sendNotification = async (
       recipientId,
       role,
       type,
+      title: title, // store empty string if not provided
+      image: image,
       message,
       status: "unread",
     });
 
     await notification.save();
-    console.log("Notification saved:", message);
+    console.log("Notification saved:", {
+      recipientId,
+      role,
+      type,
+      title,
+      image,
+      message,
+    });
   } catch (error) {
     console.error("Error saving notification:", error);
   }
