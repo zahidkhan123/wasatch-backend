@@ -132,8 +132,8 @@ export const updateUserProfileSchema = Joi.object({
       .messages({
         "string.pattern.base": "Phone number format is invalid",
       }),
-    avatarUrl: Joi.string().uri().optional(),
   }).optional(),
+  avatarUrl: Joi.string().optional(),
   property: Joi.string()
     .custom(objectIdValidator, "ObjectId validation")
     .optional()
@@ -169,8 +169,7 @@ export const updateEmployeeProfileSchema = Joi.object({
       "string.pattern.base": "Phone number format is invalid",
       "string.base": "Phone number must be a string",
     }),
-  avatarUrl: Joi.string().uri().optional().messages({
-    "string.uri": "Avatar URL must be a valid URI",
+  avatarUrl: Joi.string().optional().messages({
     "string.base": "Avatar URL must be a string",
   }),
 });

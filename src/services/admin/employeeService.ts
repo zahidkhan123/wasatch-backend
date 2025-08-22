@@ -112,6 +112,7 @@ export const getEmployeeByIdService = async (employeeId: string) => {
         employeeId: employee.employeeId,
         phone: employee.phone,
         status: employee.status,
+        avatarUrl: employee.avatarUrl || "",
         shift: {
           start: employee.shiftStart,
           end: employee.shiftEnd,

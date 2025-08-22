@@ -27,7 +27,7 @@ export const updateUserService = async (
       new: true,
     })
       .select(
-        "_id profile.firstName profile.lastName profile.phoneNumber email property unitNumber buildingNumber role"
+        "_id profile.firstName profile.lastName profile.phoneNumber email property unitNumber avatarUrl buildingNumber role"
       )
       .populate({
         path: "property",
@@ -57,6 +57,7 @@ export const updateUserService = async (
           }
         : undefined,
       unitNumber: user.unitNumber,
+      avatarUrl: user.avatarUrl,
       buildingNumber: user.buildingNumber,
       role: user.role,
     };
@@ -89,7 +90,9 @@ export const updateEmployeeService = async (
     const employee = await Employee.findByIdAndUpdate(userId, data, {
       new: true,
     })
-      .select("_id firstName lastName phone employeeId email assignedArea role")
+      .select(
+        "_id firstName lastName phone employeeId email assignedArea role avatarUrl"
+      )
       .populate({
         path: "assignedArea",
         select: "_id name",
@@ -112,6 +115,7 @@ export const updateEmployeeService = async (
       phone: employee.phone,
       employeeId: employee.employeeId,
       email: employee.email,
+      avatarUrl: employee?.avatarUrl || null,
       assignedArea: employee.assignedArea
         ? {
             _id: (employee.assignedArea as any)._id,

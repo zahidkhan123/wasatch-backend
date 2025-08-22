@@ -72,7 +72,7 @@ const getAllUsersService = async ({ search = "" }: { search?: string }) => {
     if (search && search.trim() !== "") {
       filter.name = { $regex: search.trim(), $options: "i" };
     }
-
+    console.log(filter);
     // Populate the property assigned to the user
     const users = await User.find(filter)
       .select("-__v -password -updatedAt -createdAt -role -active")
@@ -84,7 +84,6 @@ const getAllUsersService = async ({ search = "" }: { search?: string }) => {
       .lean();
     console.log(users);
     const formattedUsers = users.map((user) => {
-      console.log(user);
       return {
         _id: user._id,
         name: user.name,
@@ -92,6 +91,7 @@ const getAllUsersService = async ({ search = "" }: { search?: string }) => {
         role: user.role,
         property: user.property,
         unitNumber: user.unitNumber || "",
+        avatarUrl: user.avatarUrl || "",
       };
     });
 

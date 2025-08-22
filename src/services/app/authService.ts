@@ -190,11 +190,11 @@ export const loginUser = async ({
   let model: any;
   let selectFields = "";
   let populateOptions: any = undefined;
-
+  console.log("email,password,role", email, password, role);
   if (role === "user") {
     model = User;
     selectFields =
-      "name email profile unitNumber property role password phoneNumber apartmentName buildingNumber";
+      "name email profile unitNumber property role password phoneNumber apartmentName buildingNumber avatarUrl";
     populateOptions = {
       path: "property",
       model: "Property",
@@ -203,7 +203,7 @@ export const loginUser = async ({
   } else if (role === "employee") {
     model = Employee;
     selectFields =
-      "firstName lastName email phone employeeId assignedArea role active password shiftStart shiftEnd";
+      "firstName lastName email phone employeeId assignedArea role active password shiftStart shiftEnd avatarUrl";
     populateOptions = {
       path: "assignedArea",
       model: "Property",
@@ -220,12 +220,14 @@ export const loginUser = async ({
       success: false,
     };
   }
-
+  console.log("model", model);
   // Find user by email
   const userDoc = await model
     .findOne({ email: email.toLowerCase() })
     .select(selectFields)
     .populate(populateOptions ? populateOptions : undefined);
+
+  console.log("userDoc", userDoc);
 
   if (!userDoc) {
     return {

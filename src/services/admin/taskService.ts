@@ -13,6 +13,7 @@ import dayjs from "dayjs";
 import { getDayRangeInTZ } from "../../helpers/helperFunctions.js";
 dayjs.extend(utc);
 dayjs.extend(timezone);
+const APP_TZ = "America/New_York";
 export const getTasksService = async (filters: {
   status?: string;
   date?: string;
@@ -77,9 +78,12 @@ export const getTaskByIdService = async (id: string) => {
       .select(
         "employeeId requestId propertyId unitNumber buildingName apartmentName scheduledStart scheduledEnd specialInstructions status assignedEmployees actualStart actualEnd"
       )
-      .populate("assignedEmployees", "firstName lastName phone employeeId")
+      .populate(
+        "assignedEmployees",
+        "firstName lastName phone employeeId avatarUrl"
+      )
       .populate("requestId", "type date userId timeSlot specialInstructions")
-      .populate("employeeId", "firstName lastName")
+      .populate("employeeId", "firstName lastName avatarUrl")
       .populate("propertyId", "name");
     return {
       success: true,
