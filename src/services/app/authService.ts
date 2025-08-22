@@ -14,6 +14,7 @@ import { Property } from "../../models/admin/property.model.js";
 import { EmployeePropertyAssignment } from "../../models/admin/EmployeePropertyAssignment.js";
 import { Archive } from "../../models/archive/archive.model.js";
 import { NotificationSettingModel } from "../../models/notifications/notificationSettings.model.js";
+import bcrypt from "bcrypt";
 
 export const registerUser = async (userData: IUser): Promise<any> => {
   return runInTransaction(async (session) => {
@@ -39,6 +40,7 @@ export const registerUser = async (userData: IUser): Promise<any> => {
       [
         {
           ...userData,
+          email: userData.email.toLowerCase(),
           property: property._id,
         },
       ],
@@ -59,14 +61,14 @@ export const registerUser = async (userData: IUser): Promise<any> => {
     );
 
     if (process.env.NODE_ENV === "development") {
-      await sendEmailJob("otp", user.email, "Email Confirmation", {
-        otp: "1122",
-      });
-      (user as unknown as IUser).otp = "1122";
+      // await sendEmailJob("otp", user.email, "Email Confirmation", {
+      //   otp: "1122",
+      // });
+      // (user as unknown as IUser).otp = "1122";
       await user.save({ session });
     } else {
-      await sendEmailJob("otp", user.email, "Email Confirmation", { otp });
-      (user as unknown as IUser).otp = otp;
+      // await sendEmailJob("otp", user.email, "Email Confirmation", { otp });
+      // (user as unknown as IUser).otp = otp;
       await user.save({ session });
     }
 
@@ -273,7 +275,7 @@ export const sendPasswordResetEmail = async (
   email: string,
   user_type: UserType
 ) => {
-  const user = await User.findOne({ email, user_type });
+  const user = await User.findOne({ email: email.toLowerCase(), user_type });
   if (!user) {
     return {
       message: responseMessages.userNotFound,
@@ -299,7 +301,7 @@ export const sendPasswordResetEmail = async (
 };
 
 export const resendOTP = async (email: string, user_type: UserType) => {
-  const user = await User.findOne({ email, user_type });
+  const user = await User.findOne({ email: email.toLowerCase(), user_type });
   if (!user) {
     return {
       message: responseMessages.userNotFound,
@@ -335,7 +337,7 @@ export const verifyUserOtp = async (
   verify_email?: boolean
 ) => {
   try {
-    const user = await User.findOne({ email, user_type });
+    const user = await User.findOne({ email: email.toLowerCase(), user_type });
     if (!user) {
       return {
         message: responseMessages.userNotFound,
@@ -380,7 +382,7 @@ export const resetUserPassword = async (
   newPassword: string,
   user_type: UserType
 ) => {
-  const user = await User.findOne({ email, user_type });
+  const user = await User.findOne({ email: email.toLowerCase(), user_type });
   if (!user) {
     return {
       message: responseMessages.userNotFound,
@@ -389,7 +391,10 @@ export const resetUserPassword = async (
     };
   }
 
+  // Set the plain password and let the pre-save middleware handle hashing
   user.password = newPassword;
+  console.log("user.password before save", user.password);
+  console.log("user.isModified('password')", user.isModified("password"));
   await user.save();
 
   await sendNotification(

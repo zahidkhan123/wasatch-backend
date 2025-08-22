@@ -76,10 +76,13 @@ UserSchema.methods.comparePassword = async function (
 };
 
 UserSchema.pre("save", async function (next) {
+  console.log("this.password", this.password);
+  console.log("this.isModified('password')", this.isModified("password"));
   if (!this.isModified("password")) return next();
   try {
     const salt = await bcrypt.genSalt(10);
     this.password = await bcrypt.hash(this.password, salt);
+    console.log("this.password", this.password);
     next();
   } catch (error) {
     next(error as Error);
