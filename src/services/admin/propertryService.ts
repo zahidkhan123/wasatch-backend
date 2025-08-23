@@ -5,6 +5,7 @@ export const createPropertyService = async (
   adminId: string
 ) => {
   try {
+    console.log(data);
     const property = new Property({
       ...data,
       createdBy: adminId,

@@ -75,7 +75,7 @@ export const registerUser = async (userData: IUser): Promise<any> => {
     await sendNotification(
       (user as unknown as IUser)._id.toString() as string,
       "user",
-      "Civil.png",
+      "check.svg",
       "Account Created",
       "Your account has been created successfully.",
       "admin_alert"
@@ -393,14 +393,12 @@ export const resetUserPassword = async (
 
   // Set the plain password and let the pre-save middleware handle hashing
   user.password = newPassword;
-  console.log("user.password before save", user.password);
-  console.log("user.isModified('password')", user.isModified("password"));
   await user.save();
 
   await sendNotification(
     (user as unknown as IUser)._id.toString() as string,
     "user",
-    "Civil.png",
+    "check.svg",
     "Password Reset",
     "Your password has been reset successfully",
     "admin_alert"

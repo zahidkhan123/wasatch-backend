@@ -9,7 +9,8 @@ export const getNotifications = async (user_id: string) => {
       recipientId: user_id,
     })
       .populate("recipientId", "name email")
-      .select("title message is_read createdAt image");
+      .select("title message is_read createdAt image")
+      .sort({ createdAt: -1 }); // Newest first
     return {
       success: true,
       message: "Notifications fetched successfully",

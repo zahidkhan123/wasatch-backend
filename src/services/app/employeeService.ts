@@ -381,7 +381,7 @@ const endTask = async (taskId: string, employeeId: string) => {
       await sendNotification(
         (task.requestId as any).userId.toString(),
         "user",
-        "check.png",
+        "check.svg",
         "Task Completed",
         "Your task has been completed",
         "task_completed" as NotificationType
@@ -444,7 +444,7 @@ const delayTask = async (taskId: string, employeeId: string) => {
       await sendNotification(
         (task.requestId as any).userId.toString(),
         "user",
-        "alert.png",
+        "alert.svg",
         "Task Delayed",
         "Your task has been delayed",
         "task_alert" as NotificationType
@@ -904,7 +904,6 @@ const checkIn = async (
   location: { latitude: number; longitude: number }
 ) => {
   try {
-    // 1. Validate employee
     const employee = await Employee.findById(new Types.ObjectId(employeeId));
     if (!employee) {
       return {
@@ -913,49 +912,6 @@ const checkIn = async (
         statusCode: 404,
       };
     }
-
-    // 2. Get today's date range in APP_TZ
-    const todayRange = getDayRangeInTZ(
-      dayjs().tz(APP_TZ).startOf("day").toISOString()
-    );
-    const todayStart = todayRange.start;
-    const todayEnd = todayRange.end;
-
-    // 3. Find assignments or tasks
-    const task = await Task.findOne({
-      assignedEmployees: { $in: [new Types.ObjectId(employeeId)] },
-      propertyId: new Types.ObjectId(propertyId),
-      status: "pending",
-      scheduledStart: { $gte: todayStart, $lte: todayEnd },
-    });
-
-    const assignment = await EmployeePropertyAssignment.findOne({
-      employeeId: new Types.ObjectId(employeeId),
-      propertyId: new Types.ObjectId(propertyId),
-      validFrom: { $lte: todayStart },
-      $or: [{ validUntil: null }, { validUntil: { $gte: todayEnd } }],
-    });
-
-    // Temporary assignment creation (if needed)
-    const tempAssignment = await TemporaryAssignment.create({
-      employeeId,
-      propertyId,
-      startDate: todayStart,
-      endDate: todayEnd,
-      assignedBy: new Types.ObjectId(employeeId),
-      reason: "User requested task",
-    });
-
-    if (!task && !assignment && !tempAssignment) {
-      return {
-        success: false,
-        message:
-          "You are not officially assigned to this property for this user-requested task.",
-        statusCode: 403,
-      };
-    }
-
-    // 4. Geolocation check
     const property = await Property.findById(new Types.ObjectId(propertyId));
     if (!property || !property.location) {
       return {
@@ -965,11 +921,50 @@ const checkIn = async (
       };
     }
 
+    const isAssignedToArea = employee.assignedArea?.toString() === propertyId;
+    const tempAssignment = await TemporaryAssignment.findOne({
+      employeeId: new Types.ObjectId(employeeId),
+      propertyId: new Types.ObjectId(propertyId),
+    });
+
+    if (!isAssignedToArea && !tempAssignment) {
+      return {
+        success: false,
+        message: "You are not assigned to this property.",
+        statusCode: 403,
+      };
+    }
+
+    // Get today’s shift date (start of day in APP_TZ)
+    const shiftDate = dayjs().tz(APP_TZ).startOf("day").toDate();
+    const now = dayjs().tz(APP_TZ);
+
+    // Find today's attendance
+    let attendance = await Attendance.findOne({
+      employeeId: new Types.ObjectId(employeeId),
+      shiftDate,
+    });
+
+    // Prevent duplicate check-in for the same property
+    if (
+      attendance &&
+      attendance.propertyVisits.some(
+        (visit) => visit.propertyId.toString() === propertyId
+      )
+    ) {
+      return {
+        success: false,
+        message: "Already checked in at this property today.",
+        statusCode: 409,
+      };
+    }
+
+    // Validate property location
+
     const isNearby = isWithinRadius(property.location, {
       lat: location.latitude,
       lng: location.longitude,
     });
-
     if (!isNearby) {
       return {
         success: false,
@@ -978,130 +973,66 @@ const checkIn = async (
       };
     }
 
-    // 5. Calculate shiftDate (ALWAYS start of day in APP_TZ)
-    const shiftDate = dayjs().tz(APP_TZ).startOf("day").toDate();
-
-    // Optional: parse shiftStartTime separately for lateness calculation
-    let shiftStartTime: Date | null = null;
-    if (employee?.shiftStart && typeof employee.shiftStart === "string") {
-      const timeStr = employee.shiftStart.trim();
-      const dateStr = dayjs().tz(APP_TZ).format("YYYY-MM-DD");
-
-      if (/^\d{1,2}:\d{2}\s?(AM|PM)$/i.test(timeStr)) {
-        shiftStartTime = dayjs
-          .tz(`${dateStr} ${timeStr}`, "YYYY-MM-DD hh:mm A", APP_TZ)
-          .toDate();
-      } else if (/^\d{2}:\d{2}$/.test(timeStr)) {
-        shiftStartTime = dayjs
-          .tz(`${dateStr} ${timeStr}`, "YYYY-MM-DD HH:mm", APP_TZ)
-          .toDate();
-      }
-    }
-
-    const now = dayjs().tz(APP_TZ);
-
-    // 6. Check if attendance for today already exists
-    const attendance = await Attendance.findOne({
-      employeeId: new Types.ObjectId(employeeId),
-      shiftDate: shiftDate, // match start-of-day value
-    });
-
+    // New visit data
     const visitData = {
       propertyId: new Types.ObjectId(propertyId),
       checkIn: {
         time: now.toDate(),
-        location: {
-          lat: location.latitude,
-          lng: location.longitude,
-        },
+        location: { lat: location.latitude, lng: location.longitude },
       },
     };
 
     if (attendance) {
-      const alreadyVisited = attendance.propertyVisits.some(
-        (visit) => visit.propertyId.toString() === propertyId
-      );
-
-      if (alreadyVisited) {
-        return {
-          success: false,
-          message: "Already checked in to this property today.",
-          statusCode: 409,
-        };
-      }
-
       attendance.propertyVisits.push(visitData as any);
-
-      // Update clockIn if it’s earlier than the current one
       if (!attendance.clockIn || now.isBefore(dayjs(attendance.clockIn))) {
         attendance.clockIn = now.toDate();
       }
-
       await attendance.save();
+    } else {
+      // Determine status (on_time / late)
+      let status = "on_time";
+      if (employee.shiftStart) {
+        const shiftStart = dayjs
+          .tz(
+            `${dayjs().tz(APP_TZ).format("YYYY-MM-DD")} ${employee.shiftStart}`,
+            "YYYY-MM-DD HH:mm",
+            APP_TZ
+          )
+          .toDate();
+        const graceLimit = dayjs(shiftStart).add(GRACE_MINUTES, "minutes");
+        status = now.isAfter(graceLimit) ? "late" : "on_time";
+      }
 
-      return {
-        success: true,
-        message: "Checked in to another property successfully.",
-        statusCode: 200,
-        data: { status: attendance.status, time: now.toDate() },
-      };
+      attendance = await Attendance.create({
+        employeeId: new Types.ObjectId(employeeId),
+        shiftDate,
+        shiftStartTime: employee.shiftStart
+          ? new Date(employee.shiftStart)
+          : null,
+        clockIn: now.toDate(),
+        status,
+        propertyVisits: [visitData],
+      });
     }
 
-    // 7. Determine on_time / late status
-    const shiftStart = shiftStartTime
-      ? dayjs(shiftStartTime).tz(APP_TZ)
-      : dayjs(shiftDate).tz(APP_TZ);
-    const graceLimit = shiftStart.add(GRACE_MINUTES, "minutes");
-
-    const status =
-      now.isBefore(graceLimit) || now.isSame(graceLimit) ? "on_time" : "late";
-
-    // 8. Create new attendance
-    await Attendance.create({
-      employeeId: new Types.ObjectId(employeeId),
-      shiftDate: shiftDate,
-      shiftStartTime: shiftStart.toDate(),
-      clockIn: now.toDate(),
-      status,
-      propertyVisits: [visitData],
-    });
-
-    // 9. Update employee status
-    await Employee.findByIdAndUpdate(new Types.ObjectId(employeeId), {
-      status: status === "on_time" ? "on_duty" : "late",
+    await Employee.findByIdAndUpdate(employeeId, {
+      status: "on_duty",
       lastCheckIn: now.toDate(),
     });
 
-    // 10. Assign task if exists
-    if (task) {
-      task.employeeId = new Types.ObjectId(employeeId) as any;
-      await task.save();
-    }
-
     return {
       success: true,
-      message: `Checked in successfully (${status}).`,
+      message: "Checked in successfully.",
       statusCode: 200,
-      data: { status, time: now.toDate() },
+      data: { time: now.toDate() },
     };
   } catch (error: any) {
     console.error("Check-in error:", error);
-
-    const errorDetails =
-      error?.code === 11000
-        ? {
-            code: error.code,
-            keyPattern: error.keyPattern,
-            keyValue: error.keyValue,
-            errmsg: error.errmsg,
-          }
-        : { message: error.message || error };
-
     return {
       success: false,
       message: "Failed to check in.",
       statusCode: 500,
-      error: errorDetails,
+      error: error.message,
     };
   }
 };
@@ -1112,7 +1043,6 @@ const checkOut = async (
   location: { latitude: number; longitude: number }
 ) => {
   try {
-    // 1. Validate employee
     const employee = await Employee.findById(new Types.ObjectId(employeeId));
     if (!employee) {
       return {
@@ -1122,47 +1052,43 @@ const checkOut = async (
       };
     }
 
-    // 2. Get today's date range in APP_TZ
-    const todayRange = getDayRangeInTZ(
-      dayjs().tz(APP_TZ).startOf("day").toISOString()
-    );
-    const todayStart = todayRange.start;
-    const todayEnd = todayRange.end;
+    const shiftDate = dayjs().tz(APP_TZ).startOf("day").toDate();
+    const now = dayjs().tz(APP_TZ);
 
-    // 3. Validate assignment, temp assignment, or task
-    const assignment = await EmployeePropertyAssignment.findOne({
+    const attendance = await Attendance.findOne({
       employeeId: new Types.ObjectId(employeeId),
-      propertyId: new Types.ObjectId(propertyId),
-      validFrom: { $lte: todayStart },
-      $or: [{ validUntil: null }, { validUntil: { $gte: todayEnd } }],
+      shiftDate,
     });
-
-    const tempAssignment = await TemporaryAssignment.findOne({
-      employeeId,
-      propertyId,
-      startDate: todayStart,
-      endDate: todayEnd,
-    });
-
-    const task = await Task.findOne({
-      assignedEmployees: { $in: [new Types.ObjectId(employeeId)] },
-      propertyId: new Types.ObjectId(propertyId),
-      status: "pending",
-      scheduledStart: { $gte: todayStart, $lte: todayEnd },
-    });
-
-    console.log("task", task, assignment, tempAssignment);
-
-    if (!task && !assignment && !tempAssignment) {
+    if (!attendance) {
       return {
         success: false,
-        message:
-          "You are not officially assigned to this property for this user-requested task.",
-        statusCode: 403,
+        message: "Attendance not found for today.",
+        statusCode: 404,
       };
     }
 
-    // 4. Geolocation validation
+    // Find visit for this property
+    const visit = attendance.propertyVisits.find(
+      (v) => v.propertyId.toString() === propertyId
+    );
+    if (!visit || !visit.checkIn) {
+      return {
+        success: false,
+        message: "No active check-in found for this property.",
+        statusCode: 404,
+      };
+    }
+
+    // Block if already checked out at this property
+    if (visit.checkOut?.location?.lat && visit.checkOut?.location?.lng) {
+      return {
+        success: false,
+        message: "Already checked out from this property.",
+        statusCode: 409,
+      };
+    }
+
+    // Validate geolocation
     const property = await Property.findById(new Types.ObjectId(propertyId));
     if (!property || !property.location) {
       return {
@@ -1172,73 +1098,10 @@ const checkOut = async (
       };
     }
 
-    // 5. Calculate shiftDate (ALWAYS start of day in APP_TZ for matching Attendance)
-    const shiftDate = dayjs().tz(APP_TZ).startOf("day").toDate();
-
-    // Optional: still parse actual shift start time if needed for logging
-    let shiftStartTime: Date | null = null;
-    if (employee?.shiftStart && typeof employee.shiftStart === "string") {
-      const timeStr = employee.shiftStart.trim();
-      const dateStr = dayjs().tz(APP_TZ).format("YYYY-MM-DD");
-
-      if (/^\d{1,2}:\d{2}\s?(AM|PM)$/i.test(timeStr)) {
-        shiftStartTime = dayjs
-          .tz(`${dateStr} ${timeStr}`, "YYYY-MM-DD hh:mm A", APP_TZ)
-          .toDate();
-      } else if (/^\d{2}:\d{2}$/.test(timeStr)) {
-        shiftStartTime = dayjs
-          .tz(`${dateStr} ${timeStr}`, "YYYY-MM-DD HH:mm", APP_TZ)
-          .toDate();
-      }
-    }
-
-    const now = dayjs().tz(APP_TZ);
-    console.log("shiftDate", shiftDate, "shiftStartTime", shiftStartTime);
-
-    // 6. Find today's attendance
-    const attendance = await Attendance.findOne({
-      employeeId: new Types.ObjectId(employeeId),
-      shiftDate: shiftDate, // matches start-of-day UTC stored in DB
-    });
-
-    if (!attendance) {
-      return {
-        success: false,
-        message: "Attendance not found for today.",
-        statusCode: 404,
-      };
-    }
-
-    // 7. Find the specific propertyVisit to update
-    const visit = attendance.propertyVisits.find(
-      (v) => v.propertyId.toString() === propertyId && v.checkIn
-    );
-
-    if (!visit) {
-      return {
-        success: false,
-        message: "No active check-in found for this property.",
-        statusCode: 404,
-      };
-    }
-
-    // --- New Logic: Prevent double checkout ---
-    if (visit.checkIn && visit.checkOut) {
-      return {
-        success: false,
-        message: "Already checked out from this property.",
-        statusCode: 409,
-      };
-    }
-    // --- End New Logic ---
-
-    // --- Modified Geolocation Validation Logic ---
-    // Only enforce geolocation if not already checked out
     const isNearby = isWithinRadius(property.location, {
       lat: location.latitude,
       lng: location.longitude,
     });
-
     if (!isNearby) {
       return {
         success: false,
@@ -1246,41 +1109,32 @@ const checkOut = async (
         statusCode: 403,
       };
     }
-    // ------------------------------------------------
 
-    // 8. Set checkOut and hoursWorked
-    const checkInTime = dayjs(visit.checkIn.time);
-    const hoursWorked = now.diff(checkInTime, "minute") / 60;
-
+    // Record checkout
     visit.checkOut = {
       time: now.toDate(),
-      location: {
-        lat: location.latitude,
-        lng: location.longitude,
-      },
+      location: { lat: location.latitude, lng: location.longitude },
     };
-    visit.hoursWorked = parseFloat(hoursWorked.toFixed(2));
+    visit.hoursWorked = parseFloat(
+      (now.diff(dayjs(visit.checkIn.time), "minute") / 60).toFixed(2)
+    );
 
-    // 9. Set overall clockOut if this is the latest
-    const latestVisitOut = attendance.propertyVisits
+    // Update overall clockOut if this is the last checkout
+    const otherCheckOuts = attendance.propertyVisits
       .map((v) => v.checkOut?.time)
       .filter(Boolean)
       .map((d) => dayjs(d));
 
-    const isLatest = latestVisitOut.every((t) => now.isAfter(t));
-
+    const isLatest = otherCheckOuts.every(
+      (t) => now.isSame(t) || now.isAfter(t)
+    );
     if (isLatest) {
       attendance.clockOut = now.toDate();
+      employee.status = "off_duty";
     }
 
-    attendance.shiftEndTime = task?.scheduledEnd || attendance.shiftEndTime;
-
     await attendance.save();
-
-    // 10. Update employee status
-    await Employee.findByIdAndUpdate(new Types.ObjectId(employeeId), {
-      status: "off_duty",
-    });
+    await employee.save();
 
     return {
       success: true,
@@ -1288,7 +1142,6 @@ const checkOut = async (
       statusCode: 200,
       data: {
         clockOut: now.toDate(),
-        attendanceId: attendance._id,
         propertyId,
         hoursWorked: visit.hoursWorked,
       },
@@ -1298,8 +1151,8 @@ const checkOut = async (
     return {
       success: false,
       message: "Failed to check out.",
-      error: error.message,
       statusCode: 500,
+      error: error.message,
     };
   }
 };
@@ -1545,76 +1398,48 @@ const deleteEmployeeAccountService = async (employeeId: string) => {
 const getEmployeeCheckInStatus = async (employeeId: string) => {
   const employee = await Employee.findById(employeeId);
   if (!employee) {
-    return {
-      success: false,
-      message: "Employee not found",
-      statusCode: 404,
-    };
+    return { success: false, message: "Employee not found", statusCode: 404 };
   }
-  console.log(
-    "dayjs().tz(APP_TZ).startOf('day').toDate()",
-    dayjs().tz(APP_TZ).startOf("day").toDate()
-  );
+
+  const shiftDate = dayjs().tz(APP_TZ).startOf("day").toDate();
   const attendance = await Attendance.findOne({
     employeeId: new Types.ObjectId(employeeId),
-    shiftDate: dayjs().tz(APP_TZ).startOf("day").toDate(),
+    shiftDate,
   });
-  console.log("attendance", attendance);
-  // If no attendance found, employee has not checked in today
+
   if (!attendance) {
-    console.log("no attendance found");
     return {
       success: true,
-      message: "No attendance found for today. Employee has not checked in.",
+      message: "No attendance found for today.",
       statusCode: 200,
-      data: {
-        canCheckIn: true, // Enable check-in button
-        canCheckOut: false, // Disable check-out button
-        checkedIn: false,
-      },
+      data: { canCheckIn: true, canCheckOut: false, checkedIn: false },
     };
   }
 
-  // If attendance found, check if clockIn exists
-  if (attendance.clockIn && !attendance.clockOut) {
-    // Checked in but not checked out
+  const hasActiveVisit = attendance.propertyVisits.some(
+    (v) =>
+      v.checkIn?.location?.lat &&
+      v.checkIn?.location?.lng &&
+      (!v.checkOut?.location?.lat || !v.checkOut?.location?.lng)
+  );
+
+  if (hasActiveVisit) {
     return {
       success: true,
-      message: "Employee has checked in but not checked out.",
+      message: "Employee has active check-in(s).",
       statusCode: 200,
-      data: {
-        canCheckIn: false, // Disable check-in button
-        canCheckOut: true, // Enable check-out button
-        checkedIn: true,
-      },
-    };
-  } else if (attendance.clockIn && attendance.clockOut) {
-    // Checked in and checked out
-    return {
-      success: true,
-      message: "Employee has already checked in and checked out today.",
-      statusCode: 200,
-      data: {
-        canCheckIn: false, // Disable check-in button
-        canCheckOut: false, // Disable check-out button
-        checkedIn: false,
-      },
-    };
-  } else {
-    console.log("final else");
-    // Attendance record exists but no clockIn (should not happen, but handle gracefully)
-    return {
-      success: true,
-      message: "Attendance record found but employee has not checked in.",
-      statusCode: 200,
-      data: {
-        canCheckIn: true,
-        canCheckOut: false,
-        checkedIn: false,
-      },
+      data: { canCheckIn: false, canCheckOut: true, checkedIn: true },
     };
   }
+
+  return {
+    success: true,
+    message: "Employee has completed all check-ins and check-outs for today.",
+    statusCode: 200,
+    data: { canCheckIn: true, canCheckOut: false, checkedIn: false },
+  };
 };
+
 export {
   getDashboardSummary,
   getEmployeeTasks,

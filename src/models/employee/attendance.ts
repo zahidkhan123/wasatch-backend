@@ -88,9 +88,5 @@ const attendanceSchema = new Schema<IAttendance>(
 // Ensure one attendance record per employee per day
 attendanceSchema.index({ employeeId: 1, shiftDate: 1 }, { unique: true });
 
-// For geospatial queries (using your lat/lng format)
-attendanceSchema.index({ "propertyVisits.checkIn.location": "2dsphere" });
-attendanceSchema.index({ "propertyVisits.checkOut.location": "2dsphere" });
-
 const Attendance = model<IAttendance>("Attendance", attendanceSchema);
 export { Attendance, IAttendance };

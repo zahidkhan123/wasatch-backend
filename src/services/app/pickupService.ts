@@ -87,7 +87,7 @@ export const createOnDemandPickup = async (
         await sendNotification(
           empId.toString(),
           "employee",
-          "pickup.png",
+          "pickup.svg",
           "Pickup Status",
           `A new pickup at ${pickup.unitNumber}, ${pickup.buildingNumber}, ${pickup.apartmentName} has been assigned.`,
           "pickup_status"
@@ -99,7 +99,7 @@ export const createOnDemandPickup = async (
     await sendNotification(
       (user as { _id: Types.ObjectId })._id.toString(),
       "user",
-      "pickup.png",
+      "pickup.svg",
       "Pickup Status",
       "Your pickup has been scheduled and will be handled shortly.",
       "pickup_status"

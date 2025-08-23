@@ -35,7 +35,5 @@ const propertySchema = new Schema<IProperty>(
   { timestamps: true }
 );
 
-propertySchema.index({ location: "2dsphere" });
-
 const Property = model<IProperty>("Property", propertySchema);
 export { Property, IProperty };

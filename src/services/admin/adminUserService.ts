@@ -168,7 +168,7 @@ export const getAdminDashboardService = async () => {
 
     // === 1. PICKUP REQUEST STATS ===
     const allTodayPickups = await PickupRequest.find({
-      date: { $gte: todayStart, $lte: todayEnd },
+      date: { $gte: todayStart.toISOString(), $lte: todayEnd.toISOString() },
     });
 
     const totalRequests = allTodayPickups.length;
@@ -196,22 +196,8 @@ export const getAdminDashboardService = async () => {
     const totalProperties = await Property.countDocuments();
 
     // You could also mark properties active by checking for any pickup/task on that property today.
-    const activePropertiesSet = new Set(
-      allTodayPickups.map((p) => p.propertyId.toString())
-    );
-
-    const activePropertiesCount = activePropertiesSet.size;
-
-    // === 4. TASK STATS ===
-    // Get all tasks for today
-    const allTodayTasks = await Task.find({
-      scheduledDate: { $gte: todayStart, $lte: todayEnd },
-    });
-
-    const totalTasks = allTodayTasks.length;
-    const completedTasks = allTodayTasks.filter(
-      (t) => t.status === "completed"
-    ).length;
+    const activeProperties = await Property.find({ isActive: true });
+    const activePropertiesCount = activeProperties.length;
 
     return {
       success: true,
@@ -235,8 +221,8 @@ export const getAdminDashboardService = async () => {
           active: activePropertiesCount,
         },
         tasks: {
-          total: totalTasks,
-          completed: completedTasks,
+          total: totalRequests,
+          completed: completedRequests,
         },
       },
     };
