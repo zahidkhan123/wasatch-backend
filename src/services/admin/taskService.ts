@@ -218,7 +218,7 @@ export const createAndAssignTaskManually = async (
       scheduledStart,
       scheduledEnd,
       specialInstructions,
-      status: "pending",
+      status: "scheduled",
       assignedEmployees: [employeeId],
       isTemporaryAssignment,
     });

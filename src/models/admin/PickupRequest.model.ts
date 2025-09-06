@@ -10,7 +10,7 @@ interface IPickupRequest extends Document {
   date: Date;
   timeSlot: string;
   specialInstructions?: string;
-  status: "scheduled" | "completed" | "missed" | "delayed";
+  status: "scheduled" | "completed" | "missed" | "delayed" | "in_progress";
   assignedTaskId?: Schema.Types.ObjectId;
 }
 
@@ -31,8 +31,9 @@ const pickupRequestSchema = new Schema<IPickupRequest>(
     specialInstructions: String,
     status: {
       type: String,
-      enum: ["scheduled", "completed", "missed", "delayed"],
-      default: "scheduled",
+      enum: ["scheduled", "completed", "missed", "delayed", "in_progress"],
+      required: true,
+      default: "scheduled" as IPickupRequest["status"],
     },
     assignedTaskId: { type: Schema.Types.ObjectId, ref: "Task" },
   },

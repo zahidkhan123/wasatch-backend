@@ -304,7 +304,7 @@ export const getPickupRequests = async ({
         query.status = "scheduled";
         // Only add implicit "future" bound if no explicit date(s)
         if (!date && !dateFrom && !dateTo) {
-          query.date = { ...(query.date || {}), $lt: now };
+          query.date = { ...(query.date || {}), $gte: now };
         }
         break;
 

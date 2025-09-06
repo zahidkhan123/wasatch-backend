@@ -12,7 +12,13 @@ interface ITask extends Document {
   actualStart?: Date;
   actualEnd?: Date;
   specialInstructions?: string;
-  status: "pending" | "in_progress" | "delayed" | "missed" | "completed";
+  status:
+    | "pending"
+    | "in_progress"
+    | "delayed"
+    | "missed"
+    | "completed"
+    | "scheduled";
   delayReason?: string;
   issueReported?: string;
   assignedEmployees: Schema.Types.ObjectId[];
@@ -41,7 +47,14 @@ const taskSchema = new Schema<ITask>(
     specialInstructions: String,
     status: {
       type: String,
-      enum: ["pending", "in_progress", "delayed", "missed", "completed"],
+      enum: [
+        "pending",
+        "in_progress",
+        "delayed",
+        "missed",
+        "completed",
+        "scheduled",
+      ],
       default: "pending",
     },
     delayReason: String,

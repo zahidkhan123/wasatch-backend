@@ -129,9 +129,9 @@ export const markMissedTasks = async () => {
       dayjs(now).utc().format("YYYY-MM-DD HH:mm:ss")
     );
 
-    // Find all tasks that are pending or in_progress but past their scheduled end time
+    // Find all tasks that are pending, in_progress, or scheduled but past their scheduled end time
     const overdueTasks = await Task.find({
-      status: { $in: ["pending", "in_progress"] },
+      status: { $in: ["pending", "in_progress", "scheduled"] },
       scheduledEnd: { $lt: now },
     }).populate("requestId");
 

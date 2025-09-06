@@ -192,7 +192,7 @@ export const getAdminDashboardService = async () => {
       Employee.countDocuments({ status: "off_duty" }),
       Employee.countDocuments({ status: "late" }),
     ]);
-
+    console.log("pendingRequests", pendingRequests);
     // === 3. PROPERTY STATS ===
     const totalProperties = await Property.countDocuments();
 

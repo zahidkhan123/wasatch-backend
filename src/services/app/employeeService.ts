@@ -45,17 +45,18 @@ const getDashboardSummary = async (employeeId: string) => {
       },
     };
 
+    console.log("baseQuery", baseQuery);
     // Count tasks for today by status
     const [completedTasks, pendingTasks, missedTasks] = await Promise.all([
       Task.countDocuments({ ...baseQuery, status: "completed" }),
-      Task.countDocuments({ ...baseQuery, status: "pending" }),
+      Task.countDocuments({ ...baseQuery, status: "scheduled" }),
       Task.countDocuments({ ...baseQuery, status: "missed" }),
     ]);
 
-    // Get the next 2 upcoming pending tasks for today
+    // Get the next 2 upcoming scheduled tasks for today
     const nextTwoTasks = await Task.find({
       ...baseQuery,
-      status: "pending",
+      status: "scheduled",
     })
       .populate("requestId", "type timeSlot date userId specialInstructions")
       .sort({ scheduledStart: 1 }) // sort by soonest first
@@ -310,7 +311,10 @@ const startTask = async (taskId: string, employeeId: string) => {
         success: false,
       };
     }
-
+    await PickupRequest.updateOne(
+      { _id: (task.requestId as any)._id },
+      { $set: { status: "in_progress" } }
+    );
     // Assign the employeeId to the task's employeeId field and update status/actualStart
     task.employeeId = new Types.ObjectId(employeeId) as any;
     task.actualStart = now;

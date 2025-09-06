@@ -97,8 +97,8 @@ export const getEmployeeByIdService = async (employeeId: string) => {
     });
 
     const totalTasksToday = todaysTasks.length;
-    const pendingTasks = todaysTasks.filter(
-      (t) => t.status === "pending"
+    const scheduledTasks = todaysTasks.filter(
+      (t) => t.status === "scheduled"
     ).length;
     const onDemandTasks = todaysTasks.filter(
       (t: any) => t.type === "on_demand"
@@ -135,7 +135,7 @@ export const getEmployeeByIdService = async (employeeId: string) => {
         },
         todayTaskSummary: {
           totalTasks: totalTasksToday,
-          pendingTasks,
+          scheduledTasks,
           onDemandTasks,
         },
         recentTasks: recentTasks.map((task: any) => ({
