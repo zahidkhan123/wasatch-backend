@@ -71,7 +71,7 @@ export const reassignTask = catchAsync(async (req: Request, res: Response) => {
   const { taskId, ...updateData } = req.body;
 
   if (!taskId) {
-    return useErrorResponse(res, "Task ID is required", 400);
+    useErrorResponse(res, "Task ID is required", 400);
   }
 
   const response = await taskService.reassignTaskService({
@@ -81,13 +81,13 @@ export const reassignTask = catchAsync(async (req: Request, res: Response) => {
   });
 
   if (response.success) {
-    return useSuccessResponse(
+    useSuccessResponse(
       res,
       response.message,
       response.data,
       response.statusCode || 200
     );
   } else {
-    return useErrorResponse(res, response.message, response.statusCode || 400);
+    useErrorResponse(res, response.message, response.statusCode || 400);
   }
 });
