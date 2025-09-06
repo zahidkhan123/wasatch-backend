@@ -75,7 +75,7 @@ router.post(
 );
 
 router.post(
-  "/task/:id/report-issue",
+  "/task/report-issue",
   authenticate as RequestHandler,
   employeeAuthMiddleware as any,
   validationMiddleware(issueReportValidator),

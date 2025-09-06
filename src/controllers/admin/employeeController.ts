@@ -7,7 +7,11 @@ import {
 import { catchAsync } from "../../utils/catch-async.js";
 
 export const getEmployees = catchAsync(async (req: Request, res: Response) => {
-  const employees = await employeeService.getEmployeesService(req.query as any);
+  const { search } = req.query as { search?: string };
+  const employees = await employeeService.getEmployeesService({
+    search,
+    ...(req.query as any),
+  });
   if (employees.success) {
     useSuccessResponse(
       res,

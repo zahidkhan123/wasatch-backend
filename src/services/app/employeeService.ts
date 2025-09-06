@@ -16,9 +16,15 @@ import { sendFCMNotification } from "../../utils/sendFCM.js";
 import { User } from "../../models/user.model.js";
 import { TemporaryAssignment } from "../../models/admin/TemporaryAssignmentModel.js";
 import { PickupRequest } from "../../models/admin/PickupRequest.model.js";
+import {
+  createTaskStartedLog,
+  createTaskCompletedLog,
+  createIssueReportedLog,
+} from "../admin/activityService.js";
+import { APP_TZ, APPLICATION_TIMEZONE } from "../../config/timezoneConfig.js";
 dayjs.extend(utc);
 dayjs.extend(timezone);
-const APP_TZ = "America/New_York";
+// const APP_TZ = APPLICATION_TIMEZONE;
 const getDashboardSummary = async (employeeId: string) => {
   try {
     const today = getDayRangeInTZ(
@@ -292,9 +298,11 @@ const startTask = async (taskId: string, employeeId: string) => {
     const notificationSetting = await NotificationSettingModel.findOne({
       userId: (task.requestId as any).userId,
     }).select("issueUpdate taskStatus");
-
+    console.log("task.scheduledStart", task.scheduledStart);
+    console.log("task.scheduledEnd", task.scheduledEnd);
     // Check if current time is within scheduledStart and scheduledEnd
-    const now = new Date();
+    const now = new Date(); // this would be the mst time
+    console.log("now", now);
     if (now < task.scheduledStart || now > task.scheduledEnd) {
       return {
         message: "Task can only be started within its scheduled time window",
@@ -308,6 +316,15 @@ const startTask = async (taskId: string, employeeId: string) => {
     task.actualStart = now;
     task.status = "in_progress";
     await task.save();
+
+    // Create activity log for task started
+    await createTaskStartedLog({
+      taskId: (task._id as any).toString(),
+      employeeId: employeeId,
+      unitNumber: task.unitNumber,
+      requestType: (task.requestId as any)?.type || "routine",
+    });
+
     // if (notificationSetting?.taskStatus) {
     //   await sendNotification(
     //     (task.requestId as any).userId.toString(),
@@ -377,6 +394,14 @@ const endTask = async (taskId: string, employeeId: string) => {
       { $set: { status: "completed" } }
     );
     await task.save();
+
+    // Create activity log for task completed
+    await createTaskCompletedLog({
+      taskId: (task._id as any).toString(),
+      employeeId: employeeId,
+      unitNumber: task.unitNumber,
+      requestType: (task.requestId as any)?.type || "routine",
+    });
     if (notificationSetting?.taskStatus) {
       await sendNotification(
         (task.requestId as any).userId.toString(),
@@ -576,7 +601,7 @@ const isWithinRadius = (propertyCoords: Location, employeeCoords: Location) => {
 //     if (!isNearby) {
 //       return {
 //         success: false,
-//         message: "You must be physically at the property to check in.",
+//         message: "You must be at the property to check in.",
 //         statusCode: 403,
 //       };
 //     }
@@ -780,7 +805,7 @@ const isWithinRadius = (propertyCoords: Location, employeeCoords: Location) => {
 //     if (!isNearby) {
 //       return {
 //         success: false,
-//         message: "You must be physically at the property to check out.",
+//         message: "You must be at the property to check out.",
 //         statusCode: 403,
 //       };
 //     }
@@ -960,7 +985,6 @@ const checkIn = async (
     }
 
     // Validate property location
-
     const isNearby = isWithinRadius(property.location, {
       lat: location.latitude,
       lng: location.longitude,
@@ -968,7 +992,7 @@ const checkIn = async (
     if (!isNearby) {
       return {
         success: false,
-        message: "You must be physically at the property to check in.",
+        message: "You must be at the property to check in.",
         statusCode: 403,
       };
     }
@@ -991,24 +1015,29 @@ const checkIn = async (
     } else {
       // Determine status (on_time / late)
       let status = "on_time";
+      let shiftStartDate: Date | null = null;
+
       if (employee.shiftStart) {
-        const shiftStart = dayjs
-          .tz(
-            `${dayjs().tz(APP_TZ).format("YYYY-MM-DD")} ${employee.shiftStart}`,
-            "YYYY-MM-DD HH:mm",
-            APP_TZ
-          )
-          .toDate();
-        const graceLimit = dayjs(shiftStart).add(GRACE_MINUTES, "minutes");
-        status = now.isAfter(graceLimit) ? "late" : "on_time";
+        // Build a full datetime string for today in APP_TZ
+        const todayStr = dayjs().tz(APP_TZ).format("YYYY-MM-DD");
+        const shiftStartStr = `${todayStr} ${employee.shiftStart}`;
+        // Parse using dayjs.tz, then convert to Date
+        const shiftStart = dayjs.tz(shiftStartStr, "YYYY-MM-DD HH:mm", APP_TZ);
+        if (shiftStart.isValid()) {
+          shiftStartDate = shiftStart.toDate();
+          const graceLimit = shiftStart.add(GRACE_MINUTES, "minutes");
+          status = now.isAfter(graceLimit) ? "late" : "on_time";
+        } else {
+          // If parsing fails, fallback to on_time and null shiftStartTime
+          shiftStartDate = null;
+          status = "on_time";
+        }
       }
 
       attendance = await Attendance.create({
         employeeId: new Types.ObjectId(employeeId),
         shiftDate,
-        shiftStartTime: employee.shiftStart
-          ? new Date(employee.shiftStart)
-          : null,
+        shiftStartTime: shiftStartDate,
         clockIn: now.toDate(),
         status,
         propertyVisits: [visitData],
@@ -1105,7 +1134,7 @@ const checkOut = async (
     if (!isNearby) {
       return {
         success: false,
-        message: "You must be physically at the property to check out.",
+        message: "You must be at the property to check out.",
         statusCode: 403,
       };
     }
@@ -1158,41 +1187,42 @@ const checkOut = async (
 };
 
 const reportIssueTask = async (
-  taskId: string,
   employeeId: string,
   issueType: string,
   description: string,
-  mediaUrl: string[]
+  mediaUrl: string[],
+  taskId?: string
 ) => {
   try {
     // 1. Validate that the task exists and is assigned to the employee
-    const task = await Task.findOne({
-      _id: new Types.ObjectId(taskId),
-      assignedEmployees: { $in: [new Types.ObjectId(employeeId)] },
-    });
-
-    if (!task) {
-      return {
-        message: "Task not found or not assigned to you",
-        statusCode: 404,
-        success: false,
-      };
+    if (taskId) {
+      const task = await Task.findOne({
+        _id: new Types.ObjectId(taskId as string),
+        assignedEmployees: { $in: [new Types.ObjectId(employeeId)] },
+      });
+      if (!task) {
+        return {
+          message: "Task not found or not assigned to you",
+          statusCode: 404,
+          success: false,
+        };
+      }
     }
 
-    const isAlreadyReported = await IssueModel.findOne({
-      taskId: new Types.ObjectId(taskId),
-      employeeId: new Types.ObjectId(employeeId),
-    });
-    if (isAlreadyReported) {
-      return {
-        message: "Issue already reported for this task",
-        statusCode: 400,
-        success: false,
-      };
-    }
+    // const isAlreadyReported = await IssueModel.findOne({
+    //   taskId: taskId ? new Types.ObjectId(taskId as string) : null,
+    //   employeeId: new Types.ObjectId(employeeId),
+    // });
+    // if (isAlreadyReported) {
+    //   return {
+    //     message: "Issue already reported for this task",
+    //     statusCode: 400,
+    //     success: false,
+    //   };
+    // }
     // 2. Create the issue report
     const issueReport = await IssueModel.create({
-      taskId: new Types.ObjectId(taskId),
+      taskId: taskId ? new Types.ObjectId(taskId as string) : null,
       employeeId: new Types.ObjectId(employeeId),
       issueType,
       description,
@@ -1200,8 +1230,35 @@ const reportIssueTask = async (
     });
 
     // 3. Optionally, you can update the task to reference the issue report if needed
-    task.issueReported = issueReport._id as any;
-    await task.save();
+    if (taskId) {
+      const task = await Task.findById(new Types.ObjectId(taskId as string));
+      if (!task) {
+        return {
+          message: "Task not found",
+          statusCode: 404,
+          success: false,
+        };
+      }
+      task.issueReported = issueReport._id as any;
+      await task.save();
+
+      // Create activity log for issue reported
+      await createIssueReportedLog({
+        issueId: (issueReport._id as any).toString(),
+        taskId: taskId,
+        employeeId: employeeId,
+        unitNumber: task.unitNumber,
+        requestType: (task.requestId as any)?.type || "routine",
+      });
+    } else {
+      // Create activity log for issue reported (no task associated)
+      await createIssueReportedLog({
+        issueId: (issueReport._id as any).toString(),
+        employeeId: employeeId,
+        unitNumber: "N/A", // No specific unit for general issues
+        requestType: "general",
+      });
+    }
 
     return {
       message: "Issue reported successfully",
@@ -1223,10 +1280,12 @@ export type FilterOption = "all" | "today" | "this_week" | "this_month";
 
 const getEmployeeWorkHistory = async (
   employeeId: string,
-  filter: FilterOption = "all"
+  filter: FilterOption = "all",
+  date?: string
 ) => {
   try {
     let dateFilter: any = {};
+
     const employee = await Employee.findById(employeeId);
     if (!employee) {
       return {
@@ -1235,49 +1294,62 @@ const getEmployeeWorkHistory = async (
         statusCode: 404,
       };
     }
-    const today = getDayRangeInTZ(
-      dayjs().tz(APP_TZ).startOf("day").toISOString()
-    );
 
-    if (filter === "today") {
-      dateFilter = {
-        scheduledStart: {
-          $gte: today.start.toISOString(),
-          $lte: today.end.toISOString(),
-        },
+    // Function to group by actual scheduled date in APP_TZ
+    const groupByDate = (d: Date) => dayjs(d).tz(APP_TZ).format("YYYY-MM-DD");
+
+    if (date) {
+      // Parse given date in app timezone
+      const target = dayjs.tz(date, APP_TZ).startOf("day");
+      const dayRange = {
+        start: target.clone().startOf("day"),
+        end: target.clone().endOf("day"),
       };
-    }
-
-    if (filter === "this_week") {
-      const startOfWeek = getDayRangeInTZ(
-        dayjs().tz(APP_TZ).startOf("week").toISOString()
-      );
-      const endOfWeek = getDayRangeInTZ(
-        dayjs().tz(APP_TZ).endOf("week").toISOString()
-      );
 
       dateFilter = {
         scheduledStart: {
-          $gte: startOfWeek.start.toISOString(),
-          $lte: endOfWeek.end.toISOString(),
+          $gte: dayRange.start.toDate(),
+          $lte: dayRange.end.toDate(),
         },
       };
-    }
+    } else {
+      if (filter === "today") {
+        const target = dayjs().tz(APP_TZ).startOf("day");
+        const dayRange = {
+          start: target.clone().startOf("day"),
+          end: target.clone().endOf("day"),
+        };
+        dateFilter = {
+          scheduledStart: {
+            $gte: dayRange.start.toDate(),
+            $lte: dayRange.end.toDate(),
+          },
+        };
+      }
 
-    if (filter === "this_month") {
-      const startOfMonth = getDayRangeInTZ(
-        dayjs().tz(APP_TZ).startOf("month").toISOString()
-      );
-      const endOfMonth = getDayRangeInTZ(
-        dayjs().tz(APP_TZ).endOf("month").toISOString()
-      );
+      if (filter === "this_week") {
+        const startOfWeek = dayjs().tz(APP_TZ).startOf("week");
+        const endOfWeek = dayjs().tz(APP_TZ).endOf("week");
 
-      dateFilter = {
-        scheduledStart: {
-          $gte: startOfMonth.start.toISOString(),
-          $lte: endOfMonth.end.toISOString(),
-        },
-      };
+        dateFilter = {
+          scheduledStart: {
+            $gte: startOfWeek.toDate(),
+            $lte: endOfWeek.toDate(),
+          },
+        };
+      }
+
+      if (filter === "this_month") {
+        const startOfMonth = dayjs().tz(APP_TZ).startOf("month");
+        const endOfMonth = dayjs().tz(APP_TZ).endOf("month");
+
+        dateFilter = {
+          scheduledStart: {
+            $gte: startOfMonth.toDate(),
+            $lte: endOfMonth.toDate(),
+          },
+        };
+      }
     }
 
     const tasks = await Task.find({
@@ -1285,37 +1357,36 @@ const getEmployeeWorkHistory = async (
       ...dateFilter,
     });
 
+    // Group tasks by correct date
     const grouped: Record<string, any[]> = {};
-
     tasks.forEach((task) => {
-      const dateKey = dayjs(task.scheduledStart)
-        .tz(APP_TZ)
-        .format("YYYY-MM-DD");
+      const dateKey = groupByDate(task.scheduledStart);
       if (!grouped[dateKey]) {
         grouped[dateKey] = [];
       }
       grouped[dateKey].push(task);
     });
 
-    const result = Object.entries(grouped).map(([date, tasks]) => {
-      const formattedDate = dayjs(date).tz(APP_TZ).format("MMMM D, YYYY");
+    const result = Object.entries(grouped).map(([dateKey, tasks]) => {
+      // Always treat dateKey as a date string in APP_TZ, so parse in that timezone
+      const formattedDate = dayjs.tz(dateKey, APP_TZ).format("MMMM D, YYYY");
 
       const completedTasks = tasks.filter(
         (t) => t.status === "completed"
       ).length;
+
       const issuesReported = tasks.filter(
         (t) => t.issueReported && t.issueReported !== null
       ).length;
+
       let shiftStart: string = "";
       let shiftEnd: string = "";
 
       if (employee?.shiftStart) {
-        // Try to parse as ISO string, fallback to original string if invalid
         const shiftStartDate = dayjs(employee.shiftStart);
         if (shiftStartDate.isValid()) {
           shiftStart = shiftStartDate.tz(APP_TZ).format("HH:mm");
         } else if (typeof employee.shiftStart === "string") {
-          // Try to extract time from string (e.g., "17:00" or "5:00 PM")
           const timeMatch = employee.shiftStart.match(
             /(\d{1,2}:\d{2}(?:\s?[APMapm]{2})?)/
           );
@@ -1324,7 +1395,6 @@ const getEmployeeWorkHistory = async (
       }
 
       if (employee?.shiftEnd) {
-        // Try to parse as ISO string, fallback to original string if invalid
         const shiftEndDate = dayjs(employee.shiftEnd);
         if (shiftEndDate.isValid()) {
           shiftEnd = shiftEndDate.tz(APP_TZ).format("HH:mm");
@@ -1336,7 +1406,6 @@ const getEmployeeWorkHistory = async (
         }
       }
 
-      // Collect all task IDs for this date
       const taskIds = tasks.map((t) => t._id);
 
       return {
@@ -1346,7 +1415,7 @@ const getEmployeeWorkHistory = async (
         totalTasks: tasks.length,
         tasksCompleted: completedTasks,
         issuesReported,
-        taskIds, // array of all task ids for this date
+        taskIds,
       };
     });
 
@@ -1366,6 +1435,18 @@ const getEmployeeWorkHistory = async (
     };
   }
 };
+
+/*
+ENGLISH:
+- If you request a specific date, the response should only contain that date.
+- If you see a different date in the response, your code is not handling timezones or grouping correctly.
+- The above code ensures that the grouping and filtering use the same timezone and date logic.
+
+URDU:
+- اگر آپ کسی خاص تاریخ کی درخواست کرتے ہیں تو جواب میں صرف وہی تاریخ آنی چاہیے۔
+- اگر جواب میں کوئی اور تاریخ آ رہی ہے تو آپ کا کوڈ ٹائم زون یا گروپنگ کو صحیح ہینڈل نہیں کر رہا۔
+- اوپر دیا گیا کوڈ اس بات کو یقینی بناتا ہے کہ گروپنگ اور فلٹرنگ ایک ہی ٹائم زون اور تاریخ کے حساب سے ہو۔
+*/
 
 const deleteEmployeeAccountService = async (employeeId: string) => {
   try {

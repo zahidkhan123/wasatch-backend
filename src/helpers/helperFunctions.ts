@@ -15,7 +15,10 @@ const objectIdValidator = (value: string, helpers: Joi.CustomHelpers) => {
   return value;
 };
 
-const getDayRangeInTZ = (date: string, tz = "America/New_York") => {
+const getDayRangeInTZ = (
+  date: string,
+  tz = process.env.APP_TZ || "America/Denver"
+) => {
   return {
     start: dayjs.tz(date, tz).startOf("day").toDate(),
     end: dayjs.tz(date, tz).endOf("day").toDate(),

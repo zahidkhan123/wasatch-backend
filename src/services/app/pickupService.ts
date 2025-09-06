@@ -8,11 +8,13 @@ import { Task } from "../../models/admin/task.model.js";
 import utc from "dayjs/plugin/utc.js";
 import timezone from "dayjs/plugin/timezone.js";
 import { getDayRangeInTZ } from "../../helpers/helperFunctions.js";
+import { createTaskStartedLog } from "../admin/activityService.js";
+import { APPLICATION_TIMEZONE } from "../../config/timezoneConfig.js";
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
 
-const APP_TZ = "America/New_York";
+const APP_TZ = APPLICATION_TIMEZONE;
 
 export const createOnDemandPickup = async (
   requestData: {
@@ -48,6 +50,71 @@ export const createOnDemandPickup = async (
       };
     }
 
+    // --- One-hour slot limit check (max 35 tasks per hour) ---
+    // Accept timeSlot in formats like "10:00", "10:00—11:00", "10:00 — 11:00", etc.
+    // We'll extract the start time from the timeSlot string.
+
+    let slotStart: dayjs.Dayjs;
+    let slotEnd: dayjs.Dayjs;
+    try {
+      // Validate scheduledDate
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(requestData.scheduledDate)) {
+        throw new Error("Invalid scheduledDate format.");
+      }
+
+      // Extract start time from timeSlot (handles "10:00", "10:00—11:00", "10:00 — 11:00", etc.)
+      let timeSlotStr = requestData.timeSlot.trim();
+      // Replace em dash and en dash with normal dash for easier splitting
+      timeSlotStr = timeSlotStr.replace(/—|–/g, "-");
+      // Remove extra spaces around dashes
+      timeSlotStr = timeSlotStr.replace(/\s*-\s*/g, "-");
+      // Split on dash, take the first part as start time
+      const [startTimeRaw] = timeSlotStr.split("-");
+      const startTime = startTimeRaw.trim();
+
+      if (!/^\d{2}:\d{2}$/.test(startTime)) {
+        throw new Error("Invalid timeSlot format.");
+      }
+
+      // Use dayjs.tz with separate date and time for reliability
+      const [year, month, day] = requestData.scheduledDate.split("-");
+      const [hour, minute] = startTime.split(":");
+      slotStart = dayjs.tz(
+        `${year}-${month}-${day}T${hour}:${minute}:00`,
+        APP_TZ
+      );
+      if (!slotStart.isValid()) {
+        throw new Error("Invalid slot start time.");
+      }
+      // Set slotEnd to one hour after slotStart
+      slotEnd = slotStart.add(1, "hour");
+    } catch (err) {
+      console.log(err);
+      return {
+        success: false,
+        message: "Invalid scheduledDate or timeSlot format.",
+        statusCode: 400,
+      };
+    }
+
+    // Find all tasks for this property, on this date, in this one-hour slot
+    const existingTasksCount = await Task.countDocuments({
+      propertyId: user.property?._id,
+      scheduledStart: { $gte: slotStart.toDate(), $lt: slotEnd.toDate() },
+      // Optionally, you can filter by status if you want to only count "pending"/"scheduled" tasks
+      // status: { $in: ["pending", "scheduled"] },
+    });
+
+    if (existingTasksCount >= 35) {
+      return {
+        success: false,
+        message:
+          "Maximum number of pickups already scheduled for this hour. Please select another time.",
+        statusCode: 409,
+      };
+    }
+    // --- End slot limit check ---
+
     // Step 1: Create the pickup request
     const pickup = await PickupRequest.create({
       userId: user._id,
@@ -70,8 +137,8 @@ export const createOnDemandPickup = async (
         unitNumber: pickup.unitNumber,
         buildingName: pickup.buildingNumber,
         apartmentName: pickup.apartmentName,
-        scheduledStart: getDayRangeInTZ(requestData.scheduledDate).start,
-        scheduledEnd: getDayRangeInTZ(requestData.scheduledDate).end,
+        scheduledStart: slotStart.toDate(),
+        scheduledEnd: slotEnd.toDate(),
         assignedEmployees: assignedEmployeeIds, // <-- NEW FIELD
         specialInstructions: pickup.specialInstructions,
         status: "pending",
@@ -81,6 +148,13 @@ export const createOnDemandPickup = async (
       // Link task to pickup
       (pickup as any).assignedTaskId = task._id;
       await pickup.save();
+
+      // Create activity log for task started (on-demand pickup)
+      await createTaskStartedLog({
+        taskId: (task._id as any).toString(),
+        unitNumber: pickup.unitNumber,
+        requestType: "on_demand",
+      });
 
       // Step 4: Notify all assigned employees
       for (const empId of assignedEmployeeIds) {
@@ -170,9 +244,13 @@ export const getPickupRequests = async ({
   dateTo,
 }: GetPickupRequestsOptions) => {
   try {
+    console.log("date", date);
+    console.log("dateFrom", dateFrom);
+    console.log("dateTo", dateTo);
     const today = getDayRangeInTZ(
       dayjs().tz(APP_TZ).startOf("day").toISOString()
     );
+    console.log("today", today);
     // Normalize pagination
     const pageNum = Math.max(1, Number(page) || 1);
     const limitNum = Math.min(100, Math.max(1, Number(limit) || 10));
@@ -191,6 +269,7 @@ export const getPickupRequests = async ({
     // ---- Date filtering ----
     // If "date" is provided, it *overrides* dateFrom/dateTo and filters that whole day.
     if (date) {
+      console.log("date", date);
       const start = getDayRangeInTZ(date).start;
       const end = getDayRangeInTZ(date).end;
       console.log(start, end);
@@ -225,7 +304,7 @@ export const getPickupRequests = async ({
         query.status = "scheduled";
         // Only add implicit "future" bound if no explicit date(s)
         if (!date && !dateFrom && !dateTo) {
-          query.date = { ...(query.date || {}), $gte: now };
+          query.date = { ...(query.date || {}), $lt: now };
         }
         break;
 

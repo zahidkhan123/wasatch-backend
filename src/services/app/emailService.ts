@@ -26,24 +26,30 @@ import { redisConfig } from "../../config/redisConfig.js";
 const emailQueue = new Queue("emailQueue", { redis: redisConfig });
 
 export const sendEmailJob = async (
-  type: "otp" | "registration-status",
+  type: "otp" | "employeeCredentials",
   email: string,
   subject: string,
-  payload: { otp?: string; status?: string; message?: string }
+  payload: {
+    otp?: string;
+    email?: string;
+    employeeEmail?: string;
+    password?: string;
+  }
 ) => {
   console.log("Sending email job to queue");
-  await emailQueue.add(
-    {
-      type,
-      email,
-      subject: type === "otp" ? "Your OTP Code" : "Your Registration Status",
-      ...payload,
-    },
-    {
-      attempts: 3, // Retry 3 times
-      backoff: 5000, // 5-second delay between retries
-      removeOnComplete: true,
-    }
-  );
+  console.log("Input parameters:", { type, email, subject, payload });
+
+  const jobData = {
+    type,
+    email,
+    subject: type === "otp" ? "Your OTP Code" : "Your Employee Credentials",
+    ...payload,
+  };
+
+  await emailQueue.add(jobData, {
+    attempts: 3, // Retry 3 times
+    backoff: 5000, // 5-second delay between retries
+    removeOnComplete: true,
+  });
   console.log(`Email job added to queue for: ${email}`);
 };

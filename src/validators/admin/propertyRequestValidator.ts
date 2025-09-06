@@ -1,18 +1,18 @@
 import Joi from "joi";
 
 export const createPropertySchema = Joi.object({
-  name: Joi.string().min(3).max(100).required().messages({
+  name: Joi.string().min(3).max(30).required().messages({
     "string.empty": "Property name is required",
     "any.required": "Property name is required",
     "string.min": "Property name must be at least 3 characters",
-    "string.max": "Property name cannot exceed 100 characters",
+    "string.max": "Property name cannot exceed 30 characters",
   }),
-  emailAddress: Joi.string().email().min(5).max(255).required().messages({
+  emailAddress: Joi.string().email().min(5).max(30).required().messages({
     "string.empty": "Email address is required",
     "any.required": "Email address is required",
     "string.email": "Invalid email address",
   }),
-  managerName: Joi.string().min(2).max(50).required().messages({
+  managerName: Joi.string().min(2).max(15).required().messages({
     "string.empty": "Manager name is required",
     "any.required": "Manager name is required",
   }),
@@ -48,14 +48,14 @@ export const updatePropertySchema = Joi.object({
     "string.min": "Property name must be at least 3 characters",
     "string.max": "Property name cannot exceed 100 characters",
   }),
-  emailAddress: Joi.string().email().min(5).max(255).optional().messages({
+  emailAddress: Joi.string().email().min(5).max(30).optional().messages({
     "string.min": "Email address must be at least 5 characters",
-    "string.max": "Email address cannot exceed 255 characters",
+    "string.max": "Email address cannot exceed 30 characters",
     "string.email": "Invalid email address",
   }),
-  managerName: Joi.string().min(2).max(50).optional().messages({
+  managerName: Joi.string().min(2).max(15).optional().messages({
     "string.min": "Manager name must be at least 2 characters",
-    "string.max": "Manager name cannot exceed 50 characters",
+    "string.max": "Manager name cannot exceed 15 characters",
   }),
   phone: Joi.string()
     .pattern(/^[0-9+-\s()]{7,20}$/)

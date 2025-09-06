@@ -9,6 +9,7 @@ import {
   getPickupRequestsController,
   pickupRequestController,
   getUserDashboardPickupDataController,
+  // editPickupRequestController,
 } from "../../controllers/app/pickupController.js";
 
 const router = Router();
@@ -30,6 +31,12 @@ router.get(
   "/dashboard",
   userAuthMiddleware as any,
   getUserDashboardPickupDataController as any
+);
+
+router.put(
+  "/edit/:id",
+  userAuthMiddleware as any
+  // editPickupRequestController as any
 );
 
 export default router;

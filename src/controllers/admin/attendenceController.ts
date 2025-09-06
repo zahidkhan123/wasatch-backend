@@ -11,8 +11,16 @@ import {
 } from "../../utils/apiResponse.js";
 export const getDailyAttendanceController = catchAsync(
   async (req: Request, res: Response) => {
-    const { date, name } = req.query as { date?: string; name?: string };
-    const attendance = await fetchDailyAttendance({ date, name });
+    const { date, name, employeeId } = req.query as {
+      date?: string;
+      name?: string;
+      employeeId?: string;
+    };
+
+    console.log("date", date);
+    console.log("name", name);
+    console.log("employeeId", employeeId);
+    const attendance = await fetchDailyAttendance({ date, name, employeeId });
     if (attendance.success) {
       useSuccessResponse(
         res,

@@ -21,14 +21,14 @@ export const createFeedbackService = async (data: CreateFeedbackInput) => {
         statusCode: 404,
       };
     }
-    const existingFeedback = await Feedback.findOne({ userId: data.userId });
-    if (existingFeedback) {
-      return {
-        success: false,
-        message: "Feedback already submitted.",
-        statusCode: 400,
-      };
-    }
+    // const existingFeedback = await Feedback.findOne({ userId: data.userId });
+    // if (existingFeedback) {
+    //   return {
+    //     success: false,
+    //     message: "Feedback already submitted.",
+    //     statusCode: 400,
+    //   };
+    // }
     const feedback = await Feedback.create({
       userId: (user as { _id: Types.ObjectId })._id,
       rating: data.rating,

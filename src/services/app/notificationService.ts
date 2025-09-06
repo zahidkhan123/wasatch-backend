@@ -9,7 +9,7 @@ export const getNotifications = async (user_id: string) => {
       recipientId: user_id,
     })
       .populate("recipientId", "name email")
-      .select("title message is_read createdAt image")
+      .select("title message is_read createdAt image status")
       .sort({ createdAt: -1 }); // Newest first
     return {
       success: true,
@@ -32,7 +32,7 @@ export const updateNotification = async (notification_id: string) => {
     const notification = await Notification.findByIdAndUpdate(
       notification_id,
       {
-        isRead: true,
+        status: "read",
       },
       { new: true }
     );
@@ -55,8 +55,8 @@ export const updateNotification = async (notification_id: string) => {
 export const markAllNotificationsAsReadService = async (userId: string) => {
   try {
     const result = await Notification.updateMany(
-      { recipientId: userId, isRead: { $ne: true } },
-      { $set: { isRead: true } }
+      { recipientId: userId, status: { $ne: "read" } },
+      { $set: { status: "read" } }
     );
     return {
       success: true,

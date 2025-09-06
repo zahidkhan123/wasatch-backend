@@ -18,7 +18,6 @@ import { fileURLToPath } from "url";
 import path, { dirname } from "path";
 import cors from "cors";
 import propertyRoutes from "./routes/admin/propertyRouteHandler.js";
-import { generateRoutinePickupsJob } from "./jobs/generateRoutinePickups.js";
 import pickupRoutes from "./routes/app/pickupRoutes.js";
 import feedbackRoutes from "./routes/app/feedbackRoutes.js";
 import taskRoutes from "./routes/admin/taskRoutes.js";
@@ -27,7 +26,12 @@ import appEmployeeRoutes from "./routes/app/employeeRoutes.js";
 import attendenceRoutes from "./routes/admin/attendenceRoutes.js";
 import notificationSettingRoutes from "./routes/app/notificationSettingRoutes.js";
 import adminFeedbackRoutes from "./routes/admin/adminFeedbackRoutes.js";
+import {
+  // generateRoutinePickupsJob,
+  markMissedTasksJob,
+} from "./jobs/generateRoutinePickups.js";
 import fcmRoutes from "./routes/app/fcmRoutes.js";
+import activityRoutes from "./routes/admin/activityRoutes.js";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
@@ -71,7 +75,10 @@ app.get("/", (req: Request, res: Response) => {
 });
 
 // startArchiveCleanupJob();
-// generateRoutinePickupsJob();
+
+// Initialize cron jobs
+// generateRoutinePickupsJob(); // Runs daily at 6 PM to generate routine pickups
+markMissedTasksJob(); // Runs every 30 minutes to check for missed tasks
 
 app.use("/api/v1/auth", authRoutes);
 app.use("/api/v1/save-fcm-token", fcmRoutes);
@@ -89,6 +96,7 @@ app.use("/api/v1/employee", appEmployeeRoutes);
 app.use("/api/v1/admin/attendence", attendenceRoutes);
 app.use("/api/v1/notification-settings", notificationSettingRoutes);
 app.use("/api/v1/admin/feedback", adminFeedbackRoutes);
+app.use("/api/v1/admin/activity", activityRoutes);
 // app.use("/api/v1", googleMeetRoutes);
 app.use(errorHandler);
 const server = app.listen(port, () => {

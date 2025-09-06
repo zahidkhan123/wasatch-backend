@@ -3,6 +3,7 @@ import {
   getTasks,
   assignTaskToEmployee,
   getTaskById,
+  reassignTask,
 } from "../../controllers/admin/taskController.js";
 import {
   adminAuthMiddleware,
@@ -31,4 +32,10 @@ router.post(
   assignTaskToEmployee
 );
 
+router.put(
+  "/reassign",
+  authenticate as RequestHandler,
+  adminAuthMiddleware as any,
+  reassignTask
+);
 export default router;

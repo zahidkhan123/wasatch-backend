@@ -112,9 +112,13 @@ export const registerEmployeeService = async (
       };
     }
 
+    // Store plain text password before saving (it will be hashed by pre-save hook)
+    const plainTextPassword = employeeData.password;
+    console.log("employeeData", employeeData.email.toLowerCase());
     // 2. Create the employee
     const employee = new Employee({
       ...employeeData,
+      email: employeeData.email.toLowerCase(),
       assignedArea: property._id,
       role: "employee",
     });
@@ -133,13 +137,29 @@ export const registerEmployeeService = async (
     });
 
     // 3. Create primary assignment record
+    // Set validFrom to yesterday (start of yesterday)
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    yesterday.setHours(0, 0, 0, 0);
+
     await new EmployeePropertyAssignment({
       employeeId: employee._id,
       propertyId: property._id,
       isPrimary: true,
-      validFrom: new Date(), // starts today
+      validFrom: yesterday, // starts yesterday
       validUntil: null, // permanent
     }).save();
+
+    // send credentials through email
+    await sendEmailJob(
+      "employeeCredentials",
+      employee.email.toLowerCase(),
+      "Employee Credentials",
+      {
+        employeeEmail: employee.email.toLowerCase(),
+        password: plainTextPassword,
+      }
+    );
 
     return {
       message: "Employee registered and assigned to property successfully",
@@ -192,7 +212,6 @@ export const loginUser = async ({
   let model: any;
   let selectFields = "";
   let populateOptions: any = undefined;
-  console.log("email,password,role", email, password, role);
   if (role === "user") {
     model = User;
     selectFields =
@@ -200,7 +219,7 @@ export const loginUser = async ({
     populateOptions = {
       path: "property",
       model: "Property",
-      select: "name address",
+      select: "name address isPaid",
     };
   } else if (role === "employee") {
     model = Employee;
@@ -222,14 +241,11 @@ export const loginUser = async ({
       success: false,
     };
   }
-  console.log("model", model);
   // Find user by email
   const userDoc = await model
     .findOne({ email: email.toLowerCase() })
     .select(selectFields)
     .populate(populateOptions ? populateOptions : undefined);
-
-  console.log("userDoc", userDoc);
 
   if (!userDoc) {
     return {
@@ -368,7 +384,6 @@ export const verifyUserOtp = async (
       success: true,
     };
   } catch (error) {
-    console.log("error", error);
     return {
       message: error instanceof Error ? error.message : "Internal server error",
       statusCode: 500,

@@ -105,15 +105,14 @@ const delayEmployeeTask = catchAsync(async (req: Request, res: Response) => {
 
 const reportIssueEmployeeTask = catchAsync(
   async (req: Request, res: Response) => {
-    const task_id = req.params.id;
     const employee_id = req.user?._id as string;
-    const { issueType, description, mediaUrl } = req.body;
+    const { issueType, description, mediaUrl, taskId } = req.body;
     const result = await reportIssueTask(
-      task_id,
       employee_id,
       issueType,
       description,
-      mediaUrl
+      mediaUrl,
+      taskId
     );
     if (result.success) {
       useSuccessResponse(res, result.message, result.data, result.statusCode);
@@ -126,7 +125,8 @@ const reportIssueEmployeeTask = catchAsync(
 const getWorkHistory = catchAsync(async (req: Request, res: Response) => {
   const employee_id = req.user?._id as string;
   const filter = (req.query.filter as FilterOption) || "all";
-  const history = await getEmployeeWorkHistory(employee_id, filter);
+  const date = req.query.date as string;
+  const history = await getEmployeeWorkHistory(employee_id, filter, date);
   if (history.success) {
     useSuccessResponse(res, history.message, history.data, history.statusCode);
   } else {

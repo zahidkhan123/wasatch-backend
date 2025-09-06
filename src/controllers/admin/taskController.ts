@@ -65,3 +65,29 @@ export const assignTaskToEmployee = catchAsync(
     }
   }
 );
+
+export const reassignTask = catchAsync(async (req: Request, res: Response) => {
+  const { id } = req.user;
+  const { taskId, ...updateData } = req.body;
+
+  if (!taskId) {
+    return useErrorResponse(res, "Task ID is required", 400);
+  }
+
+  const response = await taskService.reassignTaskService({
+    id,
+    taskId,
+    ...updateData,
+  });
+
+  if (response.success) {
+    return useSuccessResponse(
+      res,
+      response.message,
+      response.data,
+      response.statusCode || 200
+    );
+  } else {
+    return useErrorResponse(res, response.message, response.statusCode || 400);
+  }
+});

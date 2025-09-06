@@ -162,9 +162,10 @@ const createUserService = async (userData: IUser): Promise<any> => {
 
 export const getAdminDashboardService = async () => {
   try {
-    // Adjust for timezone (optional): e.g., America/New_York
-    const todayStart = dayjs().tz("America/New_York").startOf("day").toDate();
-    const todayEnd = dayjs().tz("America/New_York").endOf("day").toDate();
+    // Use application timezone from configuration
+    const appTz = process.env.APP_TZ || "America/Denver";
+    const todayStart = dayjs().tz(appTz).startOf("day").toDate();
+    const todayEnd = dayjs().tz(appTz).endOf("day").toDate();
 
     // === 1. PICKUP REQUEST STATS ===
     const allTodayPickups = await PickupRequest.find({

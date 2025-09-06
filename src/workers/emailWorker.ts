@@ -21,31 +21,40 @@ const getOtpTemplate = (otp: string): string => {
   return html.replace("{{OTP}}", otp);
 };
 
-// Helper: Read and replace placeholders for registration status template
-const getRegistrationStatusTemplate = (
-  type: "otp" | "registration-status",
+// Helper: Read and replace placeholders for employee credentials template
+const getEmployeeCredentialsTemplate = (
   email: string,
-  status: "Approved" | "Rejected" | "Pending",
-  message: string
+  password: string
 ): string => {
+  // Validate inputs
+  if (!email || typeof email !== "string") {
+    throw new Error(`Invalid email provided: ${email}`);
+  }
+  if (!password || typeof password !== "string") {
+    throw new Error(`Invalid password provided: ${password}`);
+  }
+
   const filePath = path.join(
     process.cwd(),
     "src",
     "templates",
-    "registrationTemplate.html"
+    "employeeCredentialsTemplate.html"
   );
+  console.log("Template file path:", filePath);
+  console.log("Current working directory:", process.cwd());
+
   const html = fs.readFileSync(filePath, "utf-8");
 
-  const statusColorMap: Record<string, string> = {
-    Approved: "#28a745",
-    Rejected: "#dc3545",
-    Pending: "#FFA501",
-  };
+  console.log("Template replacement:", { email, password });
+  const replacedHtml = html
+    .replace("{{EMAIL}}", email)
+    .replace("{{PASSWORD}}", password);
+  console.log(
+    "Template after replacement:",
+    replacedHtml.substring(0, 200) + "..."
+  );
 
-  return html
-    .replace("{{STATUS}}", status)
-    .replace("{{STATUS_COLOR}}", statusColorMap[status])
-    .replace("{{MESSAGE}}", message);
+  return replacedHtml;
 };
 
 // Worker processor
@@ -57,9 +66,22 @@ emailQueue.process(async (job) => {
   if (type === "otp") {
     const { otp } = job.data;
     htmlContent = getOtpTemplate(otp);
-  } else if (type === "registration-status") {
-    const { status, message } = payload;
-    htmlContent = getRegistrationStatusTemplate(type, email, status, message);
+  } else if (type === "employeeCredentials") {
+    const { employeeEmail, password } = payload;
+    console.log("Employee credentials data:", { employeeEmail, password });
+
+    // Validate that email and password are not undefined
+    if (!employeeEmail || !password) {
+      console.error("Missing email or password in payload:", {
+        employeeEmail,
+        password,
+      });
+      throw new Error(
+        "Missing email or password in employee credentials payload"
+      );
+    }
+
+    htmlContent = getEmployeeCredentialsTemplate(employeeEmail, password);
   } else {
     throw new Error("Unknown email job type");
   }

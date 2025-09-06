@@ -5,18 +5,18 @@ import utc from "dayjs/plugin/utc.js";
 import timezone from "dayjs/plugin/timezone.js";
 
 export const registerUserValidationSchema = Joi.object({
-  name: Joi.string().required().max(100).messages({
+  name: Joi.string().required().max(25).messages({
     "string.base": "Name must be a string",
     "string.empty": "Name is required",
     "any.required": "Name is required",
     "string.max": "Name cannot exceed 100 characters",
   }),
-  email: Joi.string().required().email().max(100).messages({
+  email: Joi.string().required().email().max(30).messages({
     "string.base": "Email must be a string",
     "string.empty": "Email is required",
     "any.required": "Email is required",
     "string.email": "Email must be valid",
-    "string.max": "Email cannot exceed 100 characters",
+    "string.max": "Email cannot exceed 30 characters",
   }),
   password: Joi.string().required().min(4).max(20).messages({
     "string.base": "Password must be a string",
@@ -30,13 +30,13 @@ export const registerUserValidationSchema = Joi.object({
     "string.empty": "Access code is required",
     "any.required": "Access code is required",
   }),
-  firstName: Joi.string().optional().max(50).messages({
+  firstName: Joi.string().optional().max(10).messages({
     "string.base": "First name must be a string",
-    "string.max": "First name cannot exceed 50 characters",
+    "string.max": "First name cannot exceed 10 characters",
   }),
-  lastName: Joi.string().optional().max(50).messages({
+  lastName: Joi.string().optional().max(10).messages({
     "string.base": "Last name must be a string",
-    "string.max": "Last name cannot exceed 50 characters",
+    "string.max": "Last name cannot exceed 10 characters",
   }),
   property: Joi.string()
     .optional()
@@ -58,12 +58,12 @@ export const pickupRequestSchema = Joi.object({
   scheduledDate: Joi.string()
     .required()
     .custom((value, helpers) => {
-      // America/New_York timezone check
+      // Application timezone check
 
       dayjs.extend(utc);
       dayjs.extend(timezone);
 
-      const tz = "America/New_York";
+      const tz = process.env.APP_TZ || "America/Denver";
       const nowNY = dayjs().tz(tz).startOf("day");
       const inputDate = dayjs.tz(value, tz).startOf("day");
 
@@ -74,7 +74,7 @@ export const pickupRequestSchema = Joi.object({
         return helpers.error("date.min");
       }
       return value;
-    }, "America/New_York date validation")
+    }, "Application timezone date validation")
     .messages({
       "any.required": "Scheduled date is required",
       "date.base": "Scheduled date must be a valid date",

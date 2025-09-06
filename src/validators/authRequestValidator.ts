@@ -15,6 +15,7 @@ export const loginSchema = Joi.object({
 export const forgotPasswordSchema = Joi.object({
   email: Joi.string()
     .email()
+    .max(30)
     .required()
     .regex(/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/),
   user_type: Joi.string().valid("guest", "lawyer").required(),
@@ -23,6 +24,7 @@ export const forgotPasswordSchema = Joi.object({
 export const verifyOtpSchema = Joi.object({
   email: Joi.string()
     .email()
+    .max(30)
     .required()
     .regex(/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/),
   otp: Joi.string()
@@ -34,6 +36,7 @@ export const verifyOtpSchema = Joi.object({
 export const resetPasswordSchema = Joi.object({
   email: Joi.string()
     .email()
+    .max(30)
     .required()
     .regex(/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/),
   newPassword: Joi.string()

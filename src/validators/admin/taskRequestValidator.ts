@@ -1,5 +1,10 @@
 import joi from "joi";
 import { objectIdValidator } from "../../helpers/helperFunctions.js";
+import dayjs from "dayjs";
+import utc from "dayjs/plugin/utc.js";
+import timezone from "dayjs/plugin/timezone.js";
+dayjs.extend(utc);
+dayjs.extend(timezone);
 export const assignTaskToEmployeeSchema = joi.object({
   unitNumber: joi.string().min(1).max(100).required().messages({
     "string.base": "Unit number must be a string.",
@@ -39,24 +44,29 @@ export const assignTaskToEmployeeSchema = joi.object({
     .isoDate()
     .required()
     .custom((value, helpers) => {
-      const inputDate = new Date(value);
-      const now = new Date();
-      // Set both dates to midnight for date-only comparison
-      inputDate.setHours(0, 0, 0, 0);
-      now.setHours(0, 0, 0, 0);
-      if (inputDate < now) {
+      // Use application timezone from configuration
+      const tz = process.env.APP_TZ || "America/Denver";
+      const nowUSA = dayjs().tz(tz).startOf("day");
+      const inputDate = dayjs.tz(value, tz).startOf("day");
+
+      if (!inputDate.isValid()) {
+        return helpers.error("date.base");
+      }
+      if (inputDate.isBefore(nowUSA)) {
         return helpers.error("date.min", {
-          limit: now.toISOString().split("T")[0],
+          limit: nowUSA.format("YYYY-MM-DD"),
         });
       }
       return value;
-    }, "Future or today date validation")
+    }, "USA timezone date validation")
     .messages({
       "string.base": "Scheduled date must be a string in ISO format.",
       "string.empty": "Scheduled date is required.",
       "any.required": "Scheduled date is required.",
       "string.isoDate": "Scheduled date must be in ISO format (YYYY-MM-DD).",
-      "date.min": "Scheduled date must be today or a future date.",
+      "date.base": "Scheduled date must be a valid date.",
+      "date.min":
+        "Scheduled date must be today or a future date (USA time zone).",
     }),
   timeSlot: joi.string().required().messages({
     "string.base": "Time slot must be a string.",

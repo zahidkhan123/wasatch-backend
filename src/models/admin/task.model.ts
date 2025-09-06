@@ -2,7 +2,7 @@ import { Schema, model, Document } from "mongoose";
 
 interface ITask extends Document {
   requestId: Schema.Types.ObjectId;
-  employeeId: Schema.Types.ObjectId;
+  employeeId?: Schema.Types.ObjectId;
   propertyId: Schema.Types.ObjectId;
   unitNumber: string;
   buildingName: string;

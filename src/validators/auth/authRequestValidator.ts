@@ -8,7 +8,7 @@ export const registerUserSchema = Joi.object({
   }),
   name: Joi.string()
     .min(3)
-    .max(25)
+    .max(15)
     .regex(/^[a-zA-Z0-9\s]+$/)
     .required()
     .messages({
@@ -16,7 +16,7 @@ export const registerUserSchema = Joi.object({
       "string.pattern.base":
         "Name can only contain letters, numbers, and spaces",
     }),
-  email: Joi.string().email().max(50).required().messages({
+  email: Joi.string().email().max(20).required().messages({
     "string.email": "Invalid email address",
     "string.empty": "Email is required",
   }),
@@ -26,10 +26,10 @@ export const registerUserSchema = Joi.object({
     "any.required": "Password is required",
   }),
   profile: Joi.object({
-    firstName: Joi.string().min(2).max(20).required().messages({
+    firstName: Joi.string().min(2).max(10).required().messages({
       "string.empty": "First name is required",
     }),
-    lastName: Joi.string().min(2).max(20).required().messages({
+    lastName: Joi.string().min(2).max(10).required().messages({
       "string.empty": "Last name is required",
     }),
     phoneNumber: Joi.string()
@@ -47,8 +47,8 @@ export const registerUserSchema = Joi.object({
       "string.pattern.base": "Invalid Property ID",
       "any.required": "Property is required",
     }),
-  buildingNumber: Joi.string().required().messages({
-    "string.empty": "Building number is required",
+  buildingNumber: Joi.string().optional().messages({
+    "string.empty": "Building name or number is required",
   }),
   unitNumber: Joi.string().required().messages({
     "string.empty": "Unit number is required",
@@ -82,10 +82,10 @@ export const registerAdminSchema = Joi.object({
 });
 
 export const registerEmployeeSchema = Joi.object({
-  firstName: Joi.string().min(2).max(20).required().messages({
+  firstName: Joi.string().min(2).max(10).required().messages({
     "string.empty": "First name is required",
   }),
-  lastName: Joi.string().min(2).max(20).required().messages({
+  lastName: Joi.string().min(2).max(10).required().messages({
     "string.empty": "Last name is required",
   }),
   email: Joi.string().email().max(50).required().messages({

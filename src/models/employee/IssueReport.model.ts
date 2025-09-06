@@ -13,7 +13,7 @@ export interface IssueDocument extends Document {
 
 const IssueSchema = new Schema<IssueDocument>(
   {
-    taskId: { type: Schema.Types.ObjectId, ref: "Task", required: true },
+    taskId: { type: Schema.Types.ObjectId, ref: "Task", required: false },
     employeeId: {
       type: Schema.Types.ObjectId,
       ref: "Employee",

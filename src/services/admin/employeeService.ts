@@ -6,6 +6,7 @@ import { Task } from "../../models/admin/task.model.js";
 
 export const getEmployeesService = async (filters: {
   query?: "on_duty" | "off_duty" | "late" | "all";
+  search?: string;
 }): Promise<any> => {
   console.log(filters);
   try {
@@ -20,6 +21,16 @@ export const getEmployeesService = async (filters: {
       filters.query === "late"
     ) {
       query["status"] = filters.query;
+    }
+
+    // Add search functionality for first name and last name
+    if (filters.search && filters.search.trim() !== "") {
+      const searchRegex = new RegExp(filters.search.trim(), "i");
+      query["$or"] = [
+        { firstName: { $regex: searchRegex } },
+        { lastName: { $regex: searchRegex } },
+        { email: { $regex: searchRegex } },
+      ];
     }
 
     // Fetch employees and also return the property they are assigned to
