@@ -79,8 +79,7 @@ export const pickupRequestSchema = Joi.object({
       "any.required": "Scheduled date is required",
       "date.base": "Scheduled date must be a valid date",
       "date.empty": "Scheduled date is required",
-      "date.min":
-        "Scheduled date cannot be in the past. Please select today or a future date.",
+      "date.min": "Scheduled date cannot be in the past.",
     }),
   timeSlot: Joi.string().required().messages({
     "string.base": "Time slot must be a string",

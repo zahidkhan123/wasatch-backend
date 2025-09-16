@@ -57,8 +57,13 @@ export const fetchDailyAttendance = async (filters: {
     // Format the response
     const formatted = attendanceLogs.map((log: any) => ({
       name: `${log.employeeId.firstName} ${log.employeeId.lastName}`,
-      clockIn: log.clockIn ? dayjs(log.clockIn).format("hh:mm A") : "—",
-      clockOut: log.clockOut ? dayjs(log.clockOut).format("hh:mm A") : "—",
+      // Convert to 24-hour format in Mountain Time (America/Denver)
+      clockIn: log.clockIn
+        ? dayjs(log.clockIn).tz("America/Denver").format("HH:mm")
+        : "—",
+      clockOut: log.clockOut
+        ? dayjs(log.clockOut).tz("America/Denver").format("HH:mm")
+        : "—",
       status: log.status || "Absent",
       totalHours:
         log.clockIn && log.clockOut

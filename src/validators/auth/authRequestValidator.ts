@@ -16,7 +16,7 @@ export const registerUserSchema = Joi.object({
       "string.pattern.base":
         "Name can only contain letters, numbers, and spaces",
     }),
-  email: Joi.string().email().max(20).required().messages({
+  email: Joi.string().email().max(30).required().messages({
     "string.email": "Invalid email address",
     "string.empty": "Email is required",
   }),

@@ -282,7 +282,6 @@ const getTaskById = async (id: string) => {
 
 const startTask = async (taskId: string, employeeId: string) => {
   try {
-    console.log("startTask", taskId, employeeId);
     // Find the task where the employee is in assignedEmployees
     const task = await Task.findOne({
       _id: new Types.ObjectId(taskId),
@@ -291,7 +290,7 @@ const startTask = async (taskId: string, employeeId: string) => {
 
     if (!task) {
       return {
-        message: "Task not found or not assigned to you",
+        message: "Task not found",
         statusCode: 404,
         success: false,
       };
@@ -299,8 +298,6 @@ const startTask = async (taskId: string, employeeId: string) => {
     const notificationSetting = await NotificationSettingModel.findOne({
       userId: (task.requestId as any).userId,
     }).select("issueUpdate taskStatus");
-    console.log("task.scheduledStart", task.scheduledStart);
-    console.log("task.scheduledEnd", task.scheduledEnd);
     // Check if current time is within scheduledStart and scheduledEnd
     const now = new Date(); // this would be the mst time
     console.log("now", now);
@@ -367,7 +364,7 @@ const endTask = async (taskId: string, employeeId: string) => {
 
     if (!task) {
       return {
-        message: "Task not found, not assigned to you, or not in progress",
+        message: "Task not found",
         statusCode: 404,
         success: false,
       };
@@ -444,12 +441,12 @@ const delayTask = async (taskId: string, employeeId: string) => {
     const task = await Task.findOne({
       _id: new Types.ObjectId(taskId),
       assignedEmployees: { $in: [new Types.ObjectId(employeeId)] },
-      status: "pending",
+      status: "scheduled",
     }).populate("requestId");
 
     if (!task) {
       return {
-        message: "Task not found, not assigned to you, or not in progress",
+        message: "Task not found",
         statusCode: 404,
         success: false,
       };
@@ -467,7 +464,7 @@ const delayTask = async (taskId: string, employeeId: string) => {
     }
 
     task.status = "delayed";
-    task.actualEnd = now;
+    // task.actualEnd = now;
     await task.save();
     if (notificationSetting?.taskStatus) {
       await sendNotification(
@@ -1206,7 +1203,7 @@ const reportIssueTask = async (
       });
       if (!task) {
         return {
-          message: "Task not found or not assigned to you",
+          message: "Task not found",
           statusCode: 404,
           success: false,
         };
@@ -1356,10 +1353,11 @@ const getEmployeeWorkHistory = async (
       }
     }
 
+    // Sort tasks by scheduledStart descending (latest first)
     const tasks = await Task.find({
       $or: [{ employeeId }, { assignedEmployees: employeeId }],
       ...dateFilter,
-    });
+    }).sort({ scheduledStart: -1 });
 
     // Group tasks by correct date
     const grouped: Record<string, any[]> = {};
@@ -1371,57 +1369,67 @@ const getEmployeeWorkHistory = async (
       grouped[dateKey].push(task);
     });
 
-    const result = Object.entries(grouped).map(([dateKey, tasks]) => {
-      // Always treat dateKey as a date string in APP_TZ, so parse in that timezone
-      const formattedDate = dayjs.tz(dateKey, APP_TZ).format("MMMM D, YYYY");
+    // Sort the grouped entries by dateKey descending (latest date first)
+    const result = Object.entries(grouped)
+      .sort(([dateA], [dateB]) => {
+        // Compare as dates in APP_TZ
+        const a = dayjs.tz(dateA, APP_TZ);
+        const b = dayjs.tz(dateB, APP_TZ);
+        if (a.isBefore(b)) return 1;
+        if (a.isAfter(b)) return -1;
+        return 0;
+      })
+      .map(([dateKey, tasks]) => {
+        // Always treat dateKey as a date string in APP_TZ, so parse in that timezone
+        const formattedDate = dayjs.tz(dateKey, APP_TZ).format("MMMM D, YYYY");
 
-      const completedTasks = tasks.filter(
-        (t) => t.status === "completed"
-      ).length;
+        const completedTasks = tasks.filter(
+          (t) => t.status === "completed"
+        ).length;
 
-      const issuesReported = tasks.filter(
-        (t) => t.issueReported && t.issueReported !== null
-      ).length;
+        const issuesReported = tasks.filter(
+          (t) => t.issueReported && t.issueReported !== null
+        ).length;
 
-      let shiftStart: string = "";
-      let shiftEnd: string = "";
+        let shiftStart: string = "";
+        let shiftEnd: string = "";
 
-      if (employee?.shiftStart) {
-        const shiftStartDate = dayjs(employee.shiftStart);
-        if (shiftStartDate.isValid()) {
-          shiftStart = shiftStartDate.tz(APP_TZ).format("HH:mm");
-        } else if (typeof employee.shiftStart === "string") {
-          const timeMatch = employee.shiftStart.match(
-            /(\d{1,2}:\d{2}(?:\s?[APMapm]{2})?)/
-          );
-          shiftStart = timeMatch ? timeMatch[1] : "";
+        if (employee?.shiftStart) {
+          const shiftStartDate = dayjs(employee.shiftStart);
+          if (shiftStartDate.isValid()) {
+            shiftStart = shiftStartDate.tz(APP_TZ).format("HH:mm");
+          } else if (typeof employee.shiftStart === "string") {
+            const timeMatch = employee.shiftStart.match(
+              /(\d{1,2}:\d{2}(?:\s?[APMapm]{2})?)/
+            );
+            shiftStart = timeMatch ? timeMatch[1] : "";
+          }
         }
-      }
 
-      if (employee?.shiftEnd) {
-        const shiftEndDate = dayjs(employee.shiftEnd);
-        if (shiftEndDate.isValid()) {
-          shiftEnd = shiftEndDate.tz(APP_TZ).format("HH:mm");
-        } else if (typeof employee.shiftEnd === "string") {
-          const timeMatch = employee.shiftEnd.match(
-            /(\d{1,2}:\d{2}(?:\s?[APMapm]{2})?)/
-          );
-          shiftEnd = timeMatch ? timeMatch[1] : "";
+        if (employee?.shiftEnd) {
+          const shiftEndDate = dayjs(employee.shiftEnd);
+          if (shiftEndDate.isValid()) {
+            shiftEnd = shiftEndDate.tz(APP_TZ).format("HH:mm");
+          } else if (typeof employee.shiftEnd === "string") {
+            const timeMatch = employee.shiftEnd.match(
+              /(\d{1,2}:\d{2}(?:\s?[APMapm]{2})?)/
+            );
+            shiftEnd = timeMatch ? timeMatch[1] : "";
+          }
         }
-      }
 
-      const taskIds = tasks.map((t) => t._id);
+        const taskIds = tasks.map((t) => t._id);
 
-      return {
-        date: formattedDate,
-        shiftStart,
-        shiftEnd,
-        totalTasks: tasks.length,
-        tasksCompleted: completedTasks,
-        issuesReported,
-        taskIds,
-      };
-    });
+        return {
+          date: formattedDate,
+          shiftStart,
+          shiftEnd,
+          totalTasks: tasks.length,
+          tasksCompleted: completedTasks,
+          issuesReported,
+          taskIds,
+        };
+      });
 
     return {
       success: true,
@@ -1439,18 +1447,6 @@ const getEmployeeWorkHistory = async (
     };
   }
 };
-
-/*
-ENGLISH:
-- If you request a specific date, the response should only contain that date.
-- If you see a different date in the response, your code is not handling timezones or grouping correctly.
-- The above code ensures that the grouping and filtering use the same timezone and date logic.
-
-URDU:
-- اگر آپ کسی خاص تاریخ کی درخواست کرتے ہیں تو جواب میں صرف وہی تاریخ آنی چاہیے۔
-- اگر جواب میں کوئی اور تاریخ آ رہی ہے تو آپ کا کوڈ ٹائم زون یا گروپنگ کو صحیح ہینڈل نہیں کر رہا۔
-- اوپر دیا گیا کوڈ اس بات کو یقینی بناتا ہے کہ گروپنگ اور فلٹرنگ ایک ہی ٹائم زون اور تاریخ کے حساب سے ہو۔
-*/
 
 const deleteEmployeeAccountService = async (employeeId: string) => {
   try {

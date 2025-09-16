@@ -406,6 +406,16 @@ export const resetUserPassword = async (
     };
   }
 
+  // Check if the new password is the same as the current password
+  // Assuming user.comparePassword is available and returns a boolean
+  if (await (user as any).comparePassword(newPassword)) {
+    return {
+      message: "Use a different password.",
+      statusCode: 400,
+      success: false,
+    };
+  }
+
   // Set the plain password and let the pre-save middleware handle hashing
   user.password = newPassword;
   await user.save();

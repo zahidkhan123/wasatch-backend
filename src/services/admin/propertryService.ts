@@ -39,8 +39,9 @@ export const createPropertyService = async (
 
 export const getPropertiesService = async () => {
   try {
-    const properties = await Property.find();
-    if (!properties) {
+    // Fetch properties sorted by creation date descending (latest first)
+    const properties = await Property.find().sort({ createdAt: -1 });
+    if (!properties || properties.length === 0) {
       return {
         message: "No properties found.",
         statusCode: 404,

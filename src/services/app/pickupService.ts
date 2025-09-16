@@ -355,12 +355,13 @@ export const getUserDashboardPickupData = async (userId: string) => {
     .select(
       "date status unitNumber buildingName timeSlot type specialInstructions apartmentName"
     );
-
+  const start = getDayRangeInTZ(dayjs().toISOString()).start;
+  console.log("start", start);
   // Fetch the next scheduled routine pickup
   const nextRoutinePickup = await PickupRequest.findOne({
     userId,
     status: "scheduled",
-    date: { $gte: new Date() }, // Future pickups only
+    date: { $gte: start }, // Future pickups only
   })
     .sort({ date: 1 }) // Nearest upcoming
     .select(
