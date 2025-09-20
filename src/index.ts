@@ -38,20 +38,20 @@ const __dirname = dirname(__filename);
 dotenv.config();
 connectDB();
 
-const corsOptions = {
-  // origin: "https://zor-admin.vercel.app", // Or your frontend origin
-  origin: "http://localhost:3005", // Or your frontend origin
-  credentials: true, // If you're sending cookies/auth headers
-  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization"],
-};
+// const corsOptions = {
+//   // origin: "https://zor-admin.vercel.app", // Or your frontend origin
+//   origin: "http://localhost:3005", // Or your frontend origin
+//   credentials: true, // If you're sending cookies/auth headers
+//   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+//   allowedHeaders: ["Content-Type", "Authorization"],
+// };
 
 const app = express();
 app.set("trust proxy", 1);
 app.use(helmet());
 app.use(express.json());
 
-app.use(cors(corsOptions));
+// app.use(cors(corsOptions));
 const port = process.env.PORT || 3001;
 app.use(morgan("combined"));
 app.use(express.urlencoded({ extended: true }));

@@ -249,7 +249,7 @@ export const createAndAssignTaskManually = async (
 
     return {
       success: true,
-      message: `Task created and assigned successfully`,
+      message: `Task created successfully`,
       statusCode: 201,
       data: task,
     };

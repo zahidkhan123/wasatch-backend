@@ -10,6 +10,7 @@ import timezone from "dayjs/plugin/timezone.js";
 import { getDayRangeInTZ } from "../../helpers/helperFunctions.js";
 import { createTaskStartedLog } from "../admin/activityService.js";
 import { APPLICATION_TIMEZONE } from "../../config/timezoneConfig.js";
+import { Notification } from "../../models/notifications/notification.model.js";
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
@@ -244,9 +245,6 @@ export const getPickupRequests = async ({
   dateTo,
 }: GetPickupRequestsOptions) => {
   try {
-    console.log("date", date);
-    console.log("dateFrom", dateFrom);
-    console.log("dateTo", dateTo);
     const today = getDayRangeInTZ(
       dayjs().tz(APP_TZ).startOf("day").toISOString()
     );
@@ -320,7 +318,7 @@ export const getPickupRequests = async ({
         .select(
           "date status unitNumber buildingName timeSlot type specialInstructions apartmentName"
         )
-        .sort({ date: -1 })
+        .sort({ createdAt: -1 })
         .skip(skip)
         .limit(limitNum),
       PickupRequest.countDocuments(query),
@@ -349,12 +347,31 @@ export const getPickupRequests = async ({
 
 export const getUserDashboardPickupData = async (userId: string) => {
   // Fetch recent pickups (latest first)
-  const recentPickups = await PickupRequest.find({ userId })
+  const user = await User.findById(userId)
+    .populate("property")
+    .select("property isPaid");
+  if (!user) {
+    return {
+      success: false,
+      message: "User not found.",
+      statusCode: 404,
+    };
+  }
+
+  const unreadNotifications = await Notification.countDocuments({
+    recipientId: userId,
+    status: "unread",
+  }).countDocuments();
+
+  const recentPickups = await PickupRequest.find({
+    userId,
+  })
     .sort({ date: -1 })
     .limit(5) // You can adjust how many recent pickups you want to return
     .select(
       "date status unitNumber buildingName timeSlot type specialInstructions apartmentName"
     );
+
   const start = getDayRangeInTZ(dayjs().toISOString()).start;
   console.log("start", start);
   // Fetch the next scheduled routine pickup
@@ -368,11 +385,15 @@ export const getUserDashboardPickupData = async (userId: string) => {
       "date status type unitNumber buildingName timeSlot specialInstructions apartmentName"
     );
 
+  const canRequestOnDemandPickup = (user.property as any)?.isPaid;
+
   return {
     success: true,
     message: "Pickup data fetched successfully.",
     statusCode: 200,
     data: {
+      unreadNotifications,
+      canRequestOnDemandPickup,
       nextRoutinePickup,
       recentPickups,
     },

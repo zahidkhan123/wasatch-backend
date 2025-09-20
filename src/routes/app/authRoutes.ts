@@ -10,6 +10,7 @@ import {
   registerAdmin,
   verifyEmailController,
   deleteAccount,
+  verifyProperty,
 } from "../../controllers/app/authController.js";
 import {
   adminAuthMiddleware,
@@ -26,6 +27,7 @@ import {
   verifyEmailSchema,
   registerAdminSchema,
   registerEmployeeSchema,
+  verifyPropertySchema,
 } from "../../validators/auth/authRequestValidator.js";
 import { UserType } from "../../types/enums.js";
 import { useResponse } from "../../utils/rateLimiter.js";
@@ -36,6 +38,13 @@ const registerLimiter = useResponse(1 * 60 * 1000, 20); // Allow 20 attempts per
 const loginLimiter = useResponse(1 * 60 * 1000, 10); // Allow 10 attempts per 1 minute for login
 const sendOtpLimiter = useResponse(1 * 60 * 1000, 30); // Allow 10 attempts per 1 minute for OTP verification
 const verifyOtpLimiter = useResponse(1 * 60 * 1000, 5); // Allow 5 attempts per minute for OTP verification
+
+router.post(
+  "/verify-property",
+  registerLimiter,
+  validationMiddleware(verifyPropertySchema),
+  verifyProperty
+);
 
 router.post(
   "/register/user",

@@ -10,7 +10,7 @@ import { sendEmailJob } from "./emailService.js";
 import { responseMessages } from "../../utils/responseMessages.js";
 import { Employee, IEmployee } from "../../models/employee/employee.model.js";
 import { Admin, IAdmin } from "../../models/admin/admin.model.js";
-import { Property } from "../../models/admin/property.model.js";
+import { IProperty, Property } from "../../models/admin/property.model.js";
 import { EmployeePropertyAssignment } from "../../models/admin/EmployeePropertyAssignment.js";
 import { Archive } from "../../models/archive/archive.model.js";
 import { NotificationSettingModel } from "../../models/notifications/notificationSettings.model.js";
@@ -523,6 +523,45 @@ export const deleteAccountService = async (
       message: "Failed to delete account.",
       error: error.message,
       statusCode: 500,
+    };
+  }
+};
+
+export const verifyPropertyService = async (propertyData: {
+  property: string;
+  accessCode: string;
+}) => {
+  try {
+    const property = await Property.findById(propertyData.property);
+    if (!property) {
+      return {
+        message: "Property not found",
+        statusCode: 404,
+        success: false,
+      };
+    }
+
+    if (property.accessCode !== propertyData.accessCode) {
+      return {
+        message: "Invalid access code",
+        statusCode: 400,
+        success: false,
+      };
+    }
+
+    return {
+      message: "Property verified successfully",
+      statusCode: 200,
+      success: true,
+      data: null,
+    };
+  } catch (error: any) {
+    console.error("Error verifying property:", error);
+    return {
+      message: "Failed to verify property.",
+      statusCode: 500,
+      success: false,
+      error: error.message,
     };
   }
 };

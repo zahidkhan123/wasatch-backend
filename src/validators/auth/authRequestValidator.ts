@@ -136,6 +136,20 @@ export const registerEmployeeSchema = Joi.object({
     }),
 });
 
+export const verifyPropertySchema = Joi.object({
+  property: Joi.string()
+    .custom(objectIdValidator, "ObjectId validation")
+    .required()
+    .messages({
+      "string.pattern.base": "Invalid Property ID",
+      "any.required": "Property is required",
+    }),
+  accessCode: Joi.string().required().messages({
+    "string.empty": "Access code is required",
+    "any.required": "Access code is required",
+  }),
+});
+
 export const loginSchema = Joi.object({
   email: Joi.string()
     .required()

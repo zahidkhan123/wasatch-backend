@@ -10,7 +10,10 @@ import timezone from "dayjs/plugin/timezone.js";
 import { getDayRangeInTZ } from "../../helpers/helperFunctions.js";
 import { NotificationSettingModel } from "../../models/notifications/notificationSettings.model.js";
 import { sendNotification } from "../../utils/notification.js";
-import { NotificationType } from "../../models/notifications/notification.model.js";
+import {
+  NotificationType,
+  Notification,
+} from "../../models/notifications/notification.model.js";
 import { IssueModel } from "../../models/employee/IssueReport.model.js";
 import { sendFCMNotification } from "../../utils/sendFCM.js";
 import { User } from "../../models/user.model.js";
@@ -1488,12 +1491,22 @@ const getEmployeeCheckInStatus = async (employeeId: string) => {
     shiftDate,
   });
 
+  const unreadNotifications = await Notification.countDocuments({
+    recipientId: employeeId,
+    status: "unread",
+  }).countDocuments();
+
   if (!attendance) {
     return {
       success: true,
       message: "No attendance found for today.",
       statusCode: 200,
-      data: { canCheckIn: true, canCheckOut: false, checkedIn: false },
+      data: {
+        canCheckIn: true,
+        canCheckOut: false,
+        checkedIn: false,
+        unreadNotifications: unreadNotifications,
+      },
     };
   }
 
@@ -1509,7 +1522,12 @@ const getEmployeeCheckInStatus = async (employeeId: string) => {
       success: true,
       message: "Employee has active check-in(s).",
       statusCode: 200,
-      data: { canCheckIn: false, canCheckOut: true, checkedIn: true },
+      data: {
+        canCheckIn: false,
+        canCheckOut: true,
+        checkedIn: true,
+        unreadNotifications: unreadNotifications,
+      },
     };
   }
 
@@ -1517,7 +1535,12 @@ const getEmployeeCheckInStatus = async (employeeId: string) => {
     success: true,
     message: "Employee has completed all check-ins and check-outs for today.",
     statusCode: 200,
-    data: { canCheckIn: true, canCheckOut: false, checkedIn: false },
+    data: {
+      canCheckIn: true,
+      canCheckOut: false,
+      checkedIn: false,
+      unreadNotifications,
+    },
   };
 };
 

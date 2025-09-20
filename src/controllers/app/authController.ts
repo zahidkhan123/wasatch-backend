@@ -10,6 +10,7 @@ import {
   verifyEmail,
   resendOTP,
   deleteAccountService,
+  verifyPropertyService,
 } from "../../services/app/authService.js";
 import { catchAsync } from "../../utils/catch-async.js";
 import {
@@ -18,6 +19,27 @@ import {
 } from "../../utils/apiResponse.js";
 import { responseMessages } from "../../utils/responseMessages.js";
 import { UserType } from "../../types/enums.js";
+
+export const verifyProperty = catchAsync(
+  async (req: Request, res: Response) => {
+    const result = await verifyPropertyService(req.body);
+
+    if (result.success) {
+      useSuccessResponse(
+        res,
+        result?.message || responseMessages.userRegistered,
+        result?.data,
+        result?.statusCode || 200
+      );
+    } else {
+      useErrorResponse(
+        res,
+        result?.message || responseMessages.userRegistered,
+        result?.statusCode || 400
+      );
+    }
+  }
+);
 
 export const register = catchAsync(async (req: Request, res: Response) => {
   const result = await registerUser(req.body);
