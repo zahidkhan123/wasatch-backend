@@ -136,11 +136,12 @@ export const createOnDemandPickup = async (
         propertyId: pickup.propertyId,
         unitNumber: pickup.unitNumber,
         buildingName: pickup.buildingNumber,
-        scheduledStart: slotStart.toDate(),
-        scheduledEnd: slotEnd.toDate(),
+        // Ensure scheduledStart and scheduledEnd are stored in UTC, not with a +5 hour offset
+        scheduledStart: slotStart.utc().toDate(),
+        scheduledEnd: slotEnd.utc().toDate(),
         assignedEmployees: assignedEmployeeIds, // <-- NEW FIELD
         specialInstructions: pickup.specialInstructions,
-        status: "pending",
+        status: "scheduled",
         trashTypes: [],
       });
 
