@@ -68,7 +68,7 @@ export const generateRoutinePickups = async () => {
       });
 
       console.log(
-        `Scheduled routine pickup for user ${user.name} on ${scheduledDate}`
+        `Scheduled routine pickup for user ${user.profile.firstName ? user.profile.firstName : user.email} on ${scheduledDate}`
       );
 
       await sendNotification(
