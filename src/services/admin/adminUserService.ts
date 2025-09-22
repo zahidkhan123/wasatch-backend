@@ -70,7 +70,10 @@ const getAllUsersService = async ({ search = "" }: { search?: string }) => {
     const filter: any = {};
 
     if (search && search.trim() !== "") {
-      filter.name = { $regex: search.trim(), $options: "i" };
+      filter["$or"] = [
+        { "profile.firstName": { $regex: search.trim(), $options: "i" } },
+        { "profile.lastName": { $regex: search.trim(), $options: "i" } },
+      ];
     }
     console.log(filter);
     // Populate the property assigned to the user
@@ -78,19 +81,19 @@ const getAllUsersService = async ({ search = "" }: { search?: string }) => {
       .select("-__v -password -updatedAt -createdAt -role -active")
       .populate({
         path: "property",
-        select: "name unitNumber buildingName apartmentName address", // Only get the property name
+        select: "name unitNumber buildingNumber address", // Only get the property name
       })
       .select("-password")
       .lean();
-    console.log(users);
     const formattedUsers = users.map((user) => {
       return {
         _id: user._id,
-        name: user.name,
         email: user.email,
         role: user.role,
         property: user.property,
+        name: user.profile.firstName + " " + user.profile.lastName,
         unitNumber: user.unitNumber || "",
+        buildingNumber: user.buildingNumber || "",
         avatarUrl: user.avatarUrl || "",
       };
     });

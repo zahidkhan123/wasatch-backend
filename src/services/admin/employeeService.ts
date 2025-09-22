@@ -141,7 +141,6 @@ export const getEmployeeByIdService = async (employeeId: string) => {
         recentTasks: recentTasks.map((task: any) => ({
           unitNumber: task.unitNumber,
           buildingName: task.buildingName,
-          apartmentName: task.apartmentName,
           completedAt: task?.actualEnd || task?.updatedAt,
           createdAt: task?.createdAt,
         })),

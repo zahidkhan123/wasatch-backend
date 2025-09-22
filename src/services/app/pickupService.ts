@@ -122,7 +122,6 @@ export const createOnDemandPickup = async (
       propertyId: user.property?._id,
       unitNumber: user.unitNumber,
       buildingName: user.buildingNumber,
-      apartmentName: user.apartmentName,
       type: "on_demand",
       date: getDayRangeInTZ(requestData.scheduledDate).start,
       timeSlot: requestData.timeSlot,
@@ -137,7 +136,6 @@ export const createOnDemandPickup = async (
         propertyId: pickup.propertyId,
         unitNumber: pickup.unitNumber,
         buildingName: pickup.buildingNumber,
-        apartmentName: pickup.apartmentName,
         scheduledStart: slotStart.toDate(),
         scheduledEnd: slotEnd.toDate(),
         assignedEmployees: assignedEmployeeIds, // <-- NEW FIELD
@@ -164,7 +162,7 @@ export const createOnDemandPickup = async (
           "employee",
           "pickup.svg",
           "Pickup Status",
-          `A new pickup at ${pickup.unitNumber}, ${pickup.buildingNumber}, ${pickup.apartmentName} has been assigned.`,
+          `A new pickup at ${pickup.unitNumber}, ...${pickup.buildingNumber || ""} has been assigned.`,
           "pickup_status"
         );
       }
@@ -316,7 +314,7 @@ export const getPickupRequests = async ({
     const [data, total] = await Promise.all([
       PickupRequest.find(query)
         .select(
-          "date status unitNumber buildingName timeSlot type specialInstructions apartmentName"
+          "date status unitNumber buildingName timeSlot type specialInstruction"
         )
         .sort({ createdAt: -1 })
         .skip(skip)
@@ -369,7 +367,7 @@ export const getUserDashboardPickupData = async (userId: string) => {
     .sort({ date: -1 })
     .limit(5) // You can adjust how many recent pickups you want to return
     .select(
-      "date status unitNumber buildingName timeSlot type specialInstructions apartmentName"
+      "date status unitNumber buildingName timeSlot type specialInstructions"
     );
 
   const start = getDayRangeInTZ(dayjs().toISOString()).start;
@@ -382,7 +380,7 @@ export const getUserDashboardPickupData = async (userId: string) => {
   })
     .sort({ date: 1 }) // Nearest upcoming
     .select(
-      "date status type unitNumber buildingName timeSlot specialInstructions apartmentName"
+      "date status type unitNumber buildingName timeSlot specialInstructions"
     );
 
   const canRequestOnDemandPickup = (user.property as any)?.isPaid;

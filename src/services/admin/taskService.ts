@@ -48,8 +48,10 @@ export const getTasksService = async (filters: {
       .populate({
         path: "requestId",
         match: requestMatch,
-        select: "type date userId timeSlot specialInstructions",
+        select:
+          "type date timeSlot specialInstructions buildingName unitNumber propertyId",
       })
+      .populate("propertyId", "name")
       .select("-__v -updatedAt -createdAt")
       .sort({ scheduledStart: -1 });
 
@@ -77,7 +79,7 @@ export const getTaskByIdService = async (id: string) => {
   try {
     const task = await Task.findById(new Types.ObjectId(id))
       .select(
-        "employeeId requestId propertyId unitNumber buildingName apartmentName scheduledStart scheduledEnd specialInstructions status assignedEmployees actualStart actualEnd userId"
+        "employeeId requestId propertyId unitNumber scheduledStart scheduledEnd specialInstructions status assignedEmployees actualStart actualEnd userId"
       )
       .populate(
         "assignedEmployees",
@@ -88,7 +90,7 @@ export const getTaskByIdService = async (id: string) => {
         select: "type date userId timeSlot specialInstructions propertyId",
         populate: {
           path: "userId",
-          select: "buildingNumber unitNumber apartmentName",
+          select: "buildingNumber unitNumber",
         },
       })
       .populate("employeeId", "firstName lastName avatarUrl")
@@ -116,7 +118,6 @@ export const getTaskByIdService = async (id: string) => {
 interface IAssignTaskInput {
   unitNumber: string;
   buildingName: string;
-  apartmentName: string;
   propertyId: string;
   employeeId: string;
   scheduledDate: string;
@@ -137,7 +138,6 @@ export const createAndAssignTaskManually = async (
     const {
       unitNumber,
       buildingName,
-      apartmentName,
       propertyId,
       employeeId,
       scheduledDate,
@@ -200,7 +200,6 @@ export const createAndAssignTaskManually = async (
       propertyId,
       unitNumber,
       buildingNumber: buildingName,
-      apartmentName,
       type: "on_demand",
       date: scheduledStart,
       timeSlot,
@@ -214,7 +213,6 @@ export const createAndAssignTaskManually = async (
       employeeId,
       unitNumber,
       buildingName,
-      apartmentName,
       scheduledStart,
       scheduledEnd,
       specialInstructions,
@@ -268,7 +266,6 @@ interface IReassignTaskInput {
   taskId: string;
   unitNumber?: string;
   buildingName?: string;
-  apartmentName?: string;
   propertyId?: string;
   employeeId?: string;
   scheduledDate?: string;
@@ -289,7 +286,6 @@ export const reassignTaskService = async (
       taskId,
       unitNumber,
       buildingName,
-      apartmentName,
       propertyId,
       employeeId,
       scheduledDate,
@@ -438,7 +434,6 @@ export const reassignTaskService = async (
     // --- Update task fields ---
     if (unitNumber) task.unitNumber = unitNumber;
     if (buildingName) task.buildingName = buildingName;
-    if (apartmentName) task.apartmentName = apartmentName;
     if (propertyId) task.propertyId = new Types.ObjectId(propertyId) as any;
     if (specialInstructions !== undefined)
       task.specialInstructions = specialInstructions;
@@ -454,7 +449,6 @@ export const reassignTaskService = async (
     // --- Update pickup request fields ---
     if (unitNumber) pickup.unitNumber = unitNumber;
     if (buildingName) pickup.buildingNumber = buildingName;
-    if (apartmentName) pickup.apartmentName = apartmentName;
     if (propertyId) pickup.propertyId = new Types.ObjectId(propertyId) as any;
     if (specialInstructions !== undefined)
       pickup.specialInstructions = specialInstructions;

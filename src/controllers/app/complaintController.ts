@@ -3,6 +3,7 @@ import {
   createComplaintService,
   getComplaintService,
   getAllComplaintsService,
+  updateComplaintService,
 } from "../../services/app/complaintService.js";
 import {
   useErrorResponse,
@@ -46,6 +47,21 @@ export const getAllComplaintsController = async (
   res: Response
 ) => {
   const help = await getAllComplaintsService();
+  if (help.success) {
+    useSuccessResponse(res, help.message, help.data, help.statusCode);
+  } else {
+    useErrorResponse(res, help.message, help.statusCode);
+  }
+};
+
+export const updateComplaintController = async (
+  req: Request,
+  res: Response
+) => {
+  const { id, status } = req.body;
+  console.log("id", id);
+  console.log("status", status);
+  const help = await updateComplaintService(id, status);
   if (help.success) {
     useSuccessResponse(res, help.message, help.data, help.statusCode);
   } else {

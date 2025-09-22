@@ -57,6 +57,17 @@ const getEmployeeCredentialsTemplate = (
   return replacedHtml;
 };
 
+const getUserWelcomeTemplate = (): string => {
+  const filePath = path.join(
+    process.cwd(),
+    "src",
+    "templates",
+    "userWelcomeTemplate.html"
+  );
+  const html = fs.readFileSync(filePath, "utf-8");
+  return html.replace("{{PROPERTY}}", "Wasatch Waste Management");
+};
+
 // Worker processor
 emailQueue.process(async (job) => {
   const { type, email, subject, ...payload } = job.data;
@@ -82,6 +93,9 @@ emailQueue.process(async (job) => {
     }
 
     htmlContent = getEmployeeCredentialsTemplate(employeeEmail, password);
+  } else if (type === "userWelcome") {
+    // const { property } = payload;
+    htmlContent = getUserWelcomeTemplate();
   } else {
     throw new Error("Unknown email job type");
   }

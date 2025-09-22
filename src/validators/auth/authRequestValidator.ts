@@ -3,19 +3,6 @@ import { UserType } from "../../types/enums.js";
 import { objectIdValidator } from "../../helpers/helperFunctions.js";
 
 export const registerUserSchema = Joi.object({
-  accessCode: Joi.string().required().messages({
-    "string.empty": "Access code is required",
-  }),
-  name: Joi.string()
-    .min(3)
-    .max(15)
-    .regex(/^[a-zA-Z0-9\s]+$/)
-    .required()
-    .messages({
-      "string.empty": "Name is required",
-      "string.pattern.base":
-        "Name can only contain letters, numbers, and spaces",
-    }),
   email: Joi.string().email().max(30).required().messages({
     "string.email": "Invalid email address",
     "string.empty": "Email is required",
@@ -53,9 +40,12 @@ export const registerUserSchema = Joi.object({
   unitNumber: Joi.string().required().messages({
     "string.empty": "Unit number is required",
   }),
-  apartmentName: Joi.string().required().messages({
-    "string.empty": "Apartment name is required",
+
+  accessCode: Joi.string().required().messages({
+    "string.empty": "Access code is required",
+    "any.required": "Access code is required",
   }),
+
   // notifications: Joi.object({
   //   push: Joi.boolean().optional(),
   //   email: Joi.boolean().optional(),

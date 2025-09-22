@@ -6,7 +6,6 @@ interface ITask extends Document {
   propertyId: Schema.Types.ObjectId;
   unitNumber: string;
   buildingName: string;
-  apartmentName: string;
   scheduledStart: Date;
   scheduledEnd: Date;
   actualStart?: Date;
@@ -39,7 +38,6 @@ const taskSchema = new Schema<ITask>(
     employeeId: { type: Schema.Types.ObjectId, ref: "Employee", default: null },
     unitNumber: String,
     buildingName: String,
-    apartmentName: String,
     scheduledStart: Date,
     scheduledEnd: Date,
     actualStart: Date,

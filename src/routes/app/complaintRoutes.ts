@@ -9,8 +9,12 @@ import {
   createComplaintController,
   getComplaintController,
   getAllComplaintsController,
+  updateComplaintController,
 } from "../../controllers/app/complaintController.js";
-import { createComplaintSchema } from "../../validators/complaint/createComplaintValidator.js";
+import {
+  createComplaintSchema,
+  updateComplaintSchema,
+} from "../../validators/complaint/createComplaintValidator.js";
 import { validationMiddleware } from "../../middlewares/validationMiddleware.js";
 const router = express.Router();
 
@@ -20,6 +24,14 @@ router.post(
   userAuthMiddleware as any,
   validationMiddleware(createComplaintSchema),
   createComplaintController
+);
+
+router.put(
+  "/update",
+  authenticate as RequestHandler,
+  adminAuthMiddleware as any,
+  validationMiddleware(updateComplaintSchema),
+  updateComplaintController
 );
 router.get(
   "/",

@@ -72,12 +72,19 @@ export const registerUser = async (userData: IUser): Promise<any> => {
       await user.save({ session });
     }
 
+    await sendEmailJob(
+      "userWelcome",
+      user.email,
+      "Welcome to Wasatch Waste Management!",
+      {}
+    );
+
     await sendNotification(
       (user as unknown as IUser)._id.toString() as string,
       "user",
       "check.svg",
       "Account Created",
-      "Your account has been created successfully.",
+      `Welcome to Wasatch Waste Management! 🏔️ Your account is active at ${property.name}. Enjoy reliable doorstep trash service, reminders & updates. Let’s keep Utah beautiful together!`,
       "admin_alert"
     );
 
@@ -215,7 +222,7 @@ export const loginUser = async ({
   if (role === "user") {
     model = User;
     selectFields =
-      "name email profile unitNumber property role password phoneNumber apartmentName buildingNumber avatarUrl";
+      "name email profile unitNumber property role password phoneNumber buildingNumber avatarUrl";
     populateOptions = {
       path: "property",
       model: "Property",

@@ -16,11 +16,6 @@ export const assignTaskToEmployeeSchema = joi.object({
     "string.empty": "Building name is required.",
     "any.required": "Building name is required.",
   }),
-  apartmentName: joi.string().min(1).max(100).required().messages({
-    "string.base": "Apartment name must be a string.",
-    "string.empty": "Apartment name is required.",
-    "any.required": "Apartment name is required.",
-  }),
   propertyId: joi
     .string()
     .custom(objectIdValidator, "ObjectId validation")

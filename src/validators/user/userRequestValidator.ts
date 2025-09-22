@@ -5,12 +5,6 @@ import utc from "dayjs/plugin/utc.js";
 import timezone from "dayjs/plugin/timezone.js";
 
 export const registerUserValidationSchema = Joi.object({
-  name: Joi.string().required().max(25).messages({
-    "string.base": "Name must be a string",
-    "string.empty": "Name is required",
-    "any.required": "Name is required",
-    "string.max": "Name cannot exceed 100 characters",
-  }),
   email: Joi.string().required().email().max(30).messages({
     "string.base": "Email must be a string",
     "string.empty": "Email is required",

@@ -2,7 +2,6 @@ import mongoose from "mongoose";
 
 export interface IUser {
   _id: mongoose.Types.ObjectId;
-  name: string;
   email: string;
   password: string;
   profile: {
@@ -12,6 +11,7 @@ export interface IUser {
     avatarUrl?: string;
   };
   property: mongoose.Types.ObjectId;
+  buildingNumber: string;
   unitNumber: string;
   notifications: {
     push: boolean;

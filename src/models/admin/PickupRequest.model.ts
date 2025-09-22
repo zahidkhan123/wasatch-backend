@@ -5,7 +5,6 @@ interface IPickupRequest extends Document {
   propertyId: Schema.Types.ObjectId;
   unitNumber: string;
   buildingNumber: string;
-  apartmentName: string;
   type: "routine" | "on_demand";
   date: Date;
   timeSlot: string;
@@ -24,7 +23,6 @@ const pickupRequestSchema = new Schema<IPickupRequest>(
     },
     unitNumber: String,
     buildingNumber: String,
-    apartmentName: String,
     type: { type: String, enum: ["routine", "on_demand"], required: true },
     date: { type: Date, required: true },
     timeSlot: { type: String, required: true },

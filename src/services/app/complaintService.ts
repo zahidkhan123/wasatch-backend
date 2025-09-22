@@ -78,3 +78,36 @@ export const getAllComplaintsService = async () => {
     };
   }
 };
+
+export const updateComplaintService = async (id: string, status: string) => {
+  try {
+    const complaint = await ComplaintModel.findByIdAndUpdate(
+      id,
+      { status },
+      { new: true }
+    )
+      .select("-__v -updatedAt")
+      .populate("userId", "profile.firstName profile.lastName email");
+    if (!complaint) {
+      return {
+        success: false,
+        statusCode: 404,
+        message: "Complaint not found",
+        data: null,
+      };
+    }
+    return {
+      success: true,
+      statusCode: 200,
+      message: "Complaint updated successfully",
+      data: complaint,
+    };
+  } catch (error) {
+    return {
+      success: false,
+      statusCode: 500,
+      message: (error as Error).message,
+      data: null,
+    };
+  }
+};

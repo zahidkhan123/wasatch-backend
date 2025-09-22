@@ -2,7 +2,6 @@ import { Schema, model, Document, Types, Query } from "mongoose";
 import bcrypt from "bcrypt";
 
 export interface IUser extends Document {
-  name: string;
   email: string;
   password: string;
   profile: {
@@ -10,9 +9,8 @@ export interface IUser extends Document {
     lastName: string;
   };
   property: Types.ObjectId;
-  buildingNumber: string;
+  buildingNumber?: string;
   unitNumber: string;
-  apartmentName: string;
   accessCode: string;
   notifications: {
     push: boolean;
@@ -38,7 +36,6 @@ export interface IUser extends Document {
 
 const UserSchema = new Schema<IUser>(
   {
-    name: { type: String, required: true },
     email: { type: String, required: true, unique: true },
     password: { type: String, required: true },
     profile: {
@@ -46,10 +43,9 @@ const UserSchema = new Schema<IUser>(
       lastName: { type: String, required: true },
     },
     property: { type: Schema.Types.ObjectId, ref: "Property", required: true },
-    buildingNumber: { type: String, required: true },
+    buildingNumber: { type: String },
     unitNumber: { type: String, required: true },
     accessCode: { type: String, required: true },
-    apartmentName: { type: String, required: true },
     notifications: {
       push: { type: Boolean, default: true },
       email: { type: Boolean, default: true },

@@ -26,13 +26,14 @@ import { redisConfig } from "../../config/redisConfig.js";
 const emailQueue = new Queue("emailQueue", { redis: redisConfig });
 
 export const sendEmailJob = async (
-  type: "otp" | "employeeCredentials",
+  type: "otp" | "employeeCredentials" | "userWelcome",
   email: string,
   subject: string,
   payload: {
     otp?: string;
     email?: string;
     employeeEmail?: string;
+    userEmail?: string;
     password?: string;
   }
 ) => {
@@ -42,7 +43,12 @@ export const sendEmailJob = async (
   const jobData = {
     type,
     email,
-    subject: type === "otp" ? "Your OTP Code" : "Your Employee Credentials",
+    subject:
+      type === "otp"
+        ? "Your OTP Code"
+        : type === "employeeCredentials"
+          ? "Your Employee Credentials"
+          : "Welcome to Wasatch Waste Management!",
     ...payload,
   };
 

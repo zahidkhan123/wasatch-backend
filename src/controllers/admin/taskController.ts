@@ -31,7 +31,6 @@ export const assignTaskToEmployee = catchAsync(
     const {
       unitNumber,
       buildingName,
-      apartmentName,
       propertyId,
       employeeId,
       scheduledDate,
@@ -46,7 +45,6 @@ export const assignTaskToEmployee = catchAsync(
     const task = await taskService.createAndAssignTaskManually({
       unitNumber,
       buildingName,
-      apartmentName,
       propertyId,
       employeeId,
       scheduledDate,
