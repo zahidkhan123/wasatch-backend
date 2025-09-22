@@ -52,14 +52,17 @@ const getDashboardSummary = async (employeeId: string) => {
     // Count tasks for today by status
     const [completedTasks, pendingTasks, missedTasks] = await Promise.all([
       Task.countDocuments({ ...baseQuery, status: "completed" }),
-      Task.countDocuments({ ...baseQuery, status: "scheduled" }),
+      Task.countDocuments({
+        ...baseQuery,
+        status: { $in: ["scheduled", "pending"] },
+      }),
       Task.countDocuments({ ...baseQuery, status: "missed" }),
     ]);
 
     // Get the next 2 upcoming scheduled tasks for today
     const nextTwoTasks = await Task.find({
       ...baseQuery,
-      status: "scheduled",
+      status: { $in: ["scheduled", "pending"] },
     })
       .populate("requestId", "type timeSlot date userId specialInstructions")
       .sort({ scheduledStart: 1 }) // sort by soonest first
