@@ -121,7 +121,7 @@ export const createOnDemandPickup = async (
       userId: user._id,
       propertyId: user.property?._id,
       unitNumber: user.unitNumber,
-      buildingName: user.buildingNumber,
+      buildingNumber: user.buildingNumber,
       type: "on_demand",
       date: getDayRangeInTZ(requestData.scheduledDate).start,
       timeSlot: requestData.timeSlot,
@@ -246,7 +246,7 @@ export const getPickupRequests = async ({
     const today = getDayRangeInTZ(
       dayjs().tz(APP_TZ).startOf("day").toISOString()
     );
-    console.log("today", today);
+    // console.log("today", today);
     // Normalize pagination
     const pageNum = Math.max(1, Number(page) || 1);
     const limitNum = Math.min(100, Math.max(1, Number(limit) || 10));
@@ -265,10 +265,10 @@ export const getPickupRequests = async ({
     // ---- Date filtering ----
     // If "date" is provided, it *overrides* dateFrom/dateTo and filters that whole day.
     if (date) {
-      console.log("date", date);
+      // console.log("date", date);
       const start = getDayRangeInTZ(date).start;
       const end = getDayRangeInTZ(date).end;
-      console.log(start, end);
+      // console.log(start, end);
       query.date = { $gte: start, $lte: end };
     } else if (dateFrom || dateTo) {
       const dateFilter: Record<string, Date> = {};
@@ -367,11 +367,11 @@ export const getUserDashboardPickupData = async (userId: string) => {
     .sort({ date: -1 })
     .limit(5) // You can adjust how many recent pickups you want to return
     .select(
-      "date status unitNumber buildingName timeSlot type specialInstructions"
+      "date status unitNumber buildingNumber timeSlot type specialInstructions"
     );
 
   const start = getDayRangeInTZ(dayjs().toISOString()).start;
-  console.log("start", start);
+  // console.log("start", start);
   // Fetch the next scheduled routine pickup
   const nextRoutinePickup = await PickupRequest.findOne({
     userId,

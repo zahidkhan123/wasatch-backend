@@ -40,19 +40,19 @@ const getEmployeeCredentialsTemplate = (
     "templates",
     "employeeCredentialsTemplate.html"
   );
-  console.log("Template file path:", filePath);
-  console.log("Current working directory:", process.cwd());
+  // console.log("Template file path:", filePath);
+  // console.log("Current working directory:", process.cwd());
 
   const html = fs.readFileSync(filePath, "utf-8");
 
-  console.log("Template replacement:", { email, password });
+  // console.log("Template replacement:", { email, password });
   const replacedHtml = html
     .replace("{{EMAIL}}", email)
     .replace("{{PASSWORD}}", password);
-  console.log(
-    "Template after replacement:",
-    replacedHtml.substring(0, 200) + "..."
-  );
+  // console.log(
+  //   "Template after replacement:",
+  //   replacedHtml.substring(0, 200) + "..."
+  // );
 
   return replacedHtml;
 };
@@ -109,9 +109,9 @@ emailQueue.process(async (job) => {
 
   try {
     await transporter.sendMail(mailOptions);
-    console.log(`Email sent successfully to: ${email}`);
+    // console.log(`Email sent successfully to: ${email}`);
   } catch (error) {
-    console.error(`Failed to send email: ${job.id}`, error);
+    // console.error(`Failed to send email: ${job.id}`, error);
     throw error; // Job will retry
   }
 });

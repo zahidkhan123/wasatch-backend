@@ -8,7 +8,7 @@ export const getEmployeesService = async (filters: {
   query?: "on_duty" | "off_duty" | "late" | "all";
   search?: string;
 }): Promise<any> => {
-  console.log(filters);
+  // console.log(filters);
   try {
     const query: FilterQuery<IEmployee> = {};
 
@@ -49,7 +49,7 @@ export const getEmployeesService = async (filters: {
       data: employees,
     };
   } catch (error) {
-    console.log(error);
+    // console.log(error);
     return {
       success: false,
       message: "Failed to fetch employees",
@@ -103,7 +103,7 @@ export const getEmployeeByIdService = async (employeeId: string) => {
     const onDemandTasks = todaysTasks.filter(
       (t: any) => t.type === "on_demand"
     ).length;
-    console.log(employee._id);
+    // console.log(employee._id);
     // Get 3 most recent completed tasks
     const recentTasks = await Task.find({
       employeeId: employee._id,
@@ -112,7 +112,7 @@ export const getEmployeeByIdService = async (employeeId: string) => {
       .sort({ updatedAt: -1 })
       .limit(3);
 
-    console.log("recentTasks", recentTasks);
+    // console.log("recentTasks", recentTasks);
     return {
       success: true,
       message: "Employee data fetched successfully",

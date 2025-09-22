@@ -33,12 +33,12 @@ const getDashboardSummary = async (employeeId: string) => {
     const today = getDayRangeInTZ(
       dayjs().tz(APP_TZ).startOf("day").toISOString()
     );
-    console.log(
-      "today start",
-      today.start.toISOString(),
-      "end",
-      today.end.toISOString()
-    );
+    // console.log(
+    //   "today start",
+    //   today.start.toISOString(),
+    //   "end",
+    //   today.end.toISOString()
+    // );
     // Use the same query logic as getEmployeeTasks for consistency
     const baseQuery: FilterQuery<ITask> = {
       $or: [{ assignedEmployees: employeeId }, { employeeId: employeeId }],
@@ -48,7 +48,7 @@ const getDashboardSummary = async (employeeId: string) => {
       },
     };
 
-    console.log("baseQuery", baseQuery);
+    // console.log("baseQuery", baseQuery);
     // Count tasks for today by status
     const [completedTasks, pendingTasks, missedTasks] = await Promise.all([
       Task.countDocuments({ ...baseQuery, status: "completed" }),
@@ -303,7 +303,7 @@ const startTask = async (taskId: string, employeeId: string) => {
     }).select("issueUpdate taskStatus");
     // Check if current time is within scheduledStart and scheduledEnd
     const now = new Date(); // this would be the mst time
-    console.log("now", now);
+    // console.log("now", now);
     if (now < task.scheduledStart || now > task.scheduledEnd) {
       return {
         message: "Task can only be started within its scheduled time window",

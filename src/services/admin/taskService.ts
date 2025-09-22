@@ -24,7 +24,7 @@ export const getTasksService = async (filters: {
 }): Promise<any> => {
   try {
     const taskQuery: any = {};
-    console.log("status", filters.status);
+    // console.log("status", filters.status);
     // If status is "on_demand", we want to filter by request type, not task status
     const requestMatch: any = {};
     if (filters.status) {
@@ -36,7 +36,7 @@ export const getTasksService = async (filters: {
         taskQuery.status = filters.status;
       }
     }
-    console.log("taskQuery", taskQuery);
+    // console.log("taskQuery", taskQuery);
     if (filters.employee_id)
       taskQuery.assignedEmployees = new Types.ObjectId(filters.employee_id);
 
@@ -170,7 +170,7 @@ export const createAndAssignTaskManually = async (
       validFrom: { $lte: new Date() },
       $or: [{ validUntil: { $gte: new Date() } }, { validUntil: null }],
     });
-    console.log(isPermanentlyAssigned, isTemporaryAssignment);
+    // console.log(isPermanentlyAssigned, isTemporaryAssignment);
 
     // Handle temporary assignment if needed
     if (!isPermanentlyAssigned && isTemporaryAssignment) {

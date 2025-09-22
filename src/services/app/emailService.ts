@@ -37,8 +37,8 @@ export const sendEmailJob = async (
     password?: string;
   }
 ) => {
-  console.log("Sending email job to queue");
-  console.log("Input parameters:", { type, email, subject, payload });
+  // console.log("Sending email job to queue");
+  // console.log("Input parameters:", { type, email, subject, payload });
 
   const jobData = {
     type,

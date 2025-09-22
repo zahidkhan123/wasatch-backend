@@ -32,14 +32,14 @@ export const sendNotification = async (
     });
 
     await notification.save();
-    console.log("Notification saved:", {
-      recipientId,
-      role,
-      type,
-      title,
-      image,
-      message,
-    });
+    // console.log("Notification saved:", {
+    //   recipientId,
+    //   role,
+    //   type,
+    //   title,
+    //   image,
+    //   message,
+    // });
   } catch (error) {
     console.error("Error saving notification:", error);
   }

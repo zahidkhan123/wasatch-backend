@@ -241,11 +241,11 @@ export const verifyOtpSchema = Joi.object({
         ".biz",
       ];
       const hasValidTld = tlds.some((tld) => value.toLowerCase().endsWith(tld));
-      console.log(hasValidTld);
+      // console.log(hasValidTld);
       if (!hasValidTld) {
         return helpers.error("string.pattern.base");
       }
-      console.log(value);
+      // console.log(value);
       return value;
     }),
   otp: Joi.string()
