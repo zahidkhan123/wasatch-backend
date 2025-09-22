@@ -161,8 +161,8 @@ const getEmployeeTasks = async (
           }
           break;
         case "completed":
-        case "pending":
-          taskQuery.status = filters.status;
+        case "scheduled":
+          taskQuery.status = { $in: ["scheduled", "pending"] };
           if (!scheduledStartSet) {
             taskQuery.scheduledStart = getTodayRange();
             scheduledStartSet = true;
