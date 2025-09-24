@@ -102,6 +102,7 @@ const getEmployeeTasks = async (
   }
 ): Promise<any> => {
   try {
+    console.log("filters", filters);
     // Prepare base query for assigned employees or direct employeeId
     const taskQuery: FilterQuery<ITask> = {
       $or: [{ assignedEmployees: employeeId }, { employeeId: employeeId }],
@@ -161,6 +162,12 @@ const getEmployeeTasks = async (
           }
           break;
         case "completed":
+          taskQuery.status = "completed";
+          if (!scheduledStartSet) {
+            taskQuery.scheduledStart = getTodayRange();
+            scheduledStartSet = true;
+          }
+          break;
         case "scheduled":
           taskQuery.status = { $in: ["scheduled", "pending"] };
           if (!scheduledStartSet) {

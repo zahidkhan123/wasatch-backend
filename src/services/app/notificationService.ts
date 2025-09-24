@@ -105,13 +105,14 @@ export const sendNotificationService = async (
           statusCode: 404,
         };
       }
+      console.log(employee.fcmTokens);
       message = {
         tokens: employee.fcmTokens,
         notification: { title, body },
         // data: { click_action: "FLUTTER_NOTIFICATION_CLICK" }, // optional
       };
     }
-
+    console.log(message);
     const response = await admin.messaging().sendEachForMulticast(message);
     console.log(response);
 
