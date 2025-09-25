@@ -16,7 +16,7 @@ import complaintRoutes from "./routes/app/complaintRoutes.js";
 import settingsRoutes from "./routes/app/settingRoutes.js";
 import { fileURLToPath } from "url";
 import path, { dirname } from "path";
-import cors from "cors";
+// import cors from "cors";
 import propertyRoutes from "./routes/admin/propertyRouteHandler.js";
 import pickupRoutes from "./routes/app/pickupRoutes.js";
 import feedbackRoutes from "./routes/app/feedbackRoutes.js";
@@ -26,10 +26,8 @@ import appEmployeeRoutes from "./routes/app/employeeRoutes.js";
 import attendenceRoutes from "./routes/admin/attendenceRoutes.js";
 import notificationSettingRoutes from "./routes/app/notificationSettingRoutes.js";
 import adminFeedbackRoutes from "./routes/admin/adminFeedbackRoutes.js";
-import {
-  // generateRoutinePickupsJob,
-  markMissedTasksJob,
-} from "./jobs/generateRoutinePickups.js";
+// import { generateRoutinePickupsJob } from "./jobs/generateRoutinePickups.js";
+import { spawn } from "child_process";
 import fcmRoutes from "./routes/app/fcmRoutes.js";
 import activityRoutes from "./routes/admin/activityRoutes.js";
 const __filename = fileURLToPath(import.meta.url);
@@ -78,7 +76,35 @@ app.get("/", (req: Request, res: Response) => {
 
 // Initialize cron jobs
 // generateRoutinePickupsJob(); // Runs daily at 6 PM to generate routine pickups
-markMissedTasksJob(); // Runs every 30 minutes to check for missed tasks
+
+// Start missed tasks cron in a separate worker process to avoid blocking main thread
+const startMissedTasksWorker = () => {
+  const isProduction = process.env.NODE_ENV === "production";
+  const workerCmd = "node";
+  const workerArgs = isProduction
+    ? [path.join(process.cwd(), "dist", "workers", "missedTasksWorker.js")]
+    : [
+        "--loader",
+        "ts-node/esm",
+        path.join(process.cwd(), "src", "workers", "missedTasksWorker.ts"),
+      ];
+
+  const child = spawn(workerCmd, workerArgs, {
+    stdio: "inherit",
+    env: process.env,
+  });
+
+  child.on("exit", (code) => {
+    console.log(`MissedTasksWorker exited with code ${code}`);
+  });
+
+  child.on("error", (err) => {
+    console.error("Failed to start MissedTasksWorker:", err);
+  });
+  return child;
+};
+
+const missedTasksWorker = startMissedTasksWorker();
 
 app.use("/api/v1/auth", authRoutes);
 app.use("/api/v1/save-fcm-token", fcmRoutes);
@@ -104,6 +130,9 @@ const server = app.listen(port, () => {
 });
 process.on("SIGTERM", () => {
   console.log("SIGTERM received. Closing server...");
+  if (missedTasksWorker && !missedTasksWorker.killed) {
+    missedTasksWorker.kill();
+  }
   server.close(() => {
     console.log("Server closed");
     process.exit(0);
@@ -112,6 +141,9 @@ process.on("SIGTERM", () => {
 
 process.on("SIGINT", () => {
   console.log("SIGINT received. Closing server...");
+  if (missedTasksWorker && !missedTasksWorker.killed) {
+    missedTasksWorker.kill();
+  }
   server.close(() => {
     console.log("Server closed");
     process.exit(0);

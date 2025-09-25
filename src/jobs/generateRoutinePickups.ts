@@ -1,5 +1,7 @@
 import cron from "node-cron";
 import dayjs from "dayjs";
+import utc from "dayjs/plugin/utc.js";
+import timezone from "dayjs/plugin/timezone.js";
 import { IUser, User } from "../models/user.model.js";
 import { PickupRequest } from "../models/admin/PickupRequest.model.js";
 import { sendNotification } from "../utils/notification.js";
@@ -9,6 +11,10 @@ import { Task } from "../models/admin/task.model.js";
 import { Attendance } from "../models/employee/attendance.js";
 import { createTaskMissedLog } from "../services/admin/activityService.js";
 import { APPLICATION_TIMEZONE } from "../config/timezoneConfig.js";
+
+// Ensure dayjs has timezone support in any process that imports this module
+dayjs.extend(utc);
+dayjs.extend(timezone);
 
 /**
  * Generate routine pickups for tomorrow
@@ -205,7 +211,7 @@ export const markMissedTasks = async () => {
 export const markMissedTasksJob = () => {
   // Run every 30 minutes
   cron.schedule(
-    "*/1 * * * *",
+    "*/10 * * * *",
     () => {
       console.log("Starting missed tasks check cron job");
       markMissedTasks();
@@ -216,6 +222,6 @@ export const markMissedTasksJob = () => {
   );
 
   console.log(
-    `Missed tasks check cron job scheduled every 30 minutes in ${APPLICATION_TIMEZONE}`
+    `Missed tasks check cron job scheduled every 10 minutes in ${APPLICATION_TIMEZONE}`
   );
 };
