@@ -79,7 +79,7 @@ export const getTaskByIdService = async (id: string) => {
   try {
     const task = await Task.findById(new Types.ObjectId(id))
       .select(
-        "employeeId requestId propertyId unitNumber scheduledStart scheduledEnd specialInstructions status assignedEmployees actualStart actualEnd userId"
+        "employeeId requestId propertyId unitNumber buildingName scheduledStart scheduledEnd specialInstructions status assignedEmployees actualStart actualEnd userId"
       )
       .populate(
         "assignedEmployees",
@@ -199,7 +199,7 @@ export const createAndAssignTaskManually = async (
       userId: null,
       propertyId,
       unitNumber,
-      buildingNumber: buildingName,
+      buildingNumber: buildingName || "",
       type: "on_demand",
       date: scheduledStart,
       timeSlot,
@@ -212,7 +212,7 @@ export const createAndAssignTaskManually = async (
       propertyId,
       employeeId,
       unitNumber,
-      buildingName,
+      ...(buildingName !== undefined ? { buildingName } : {}),
       scheduledStart,
       scheduledEnd,
       specialInstructions,
@@ -239,7 +239,7 @@ export const createAndAssignTaskManually = async (
       "employee",
       "NewTaskAssign.svg",
       "Task Assignment",
-      `New task assigned at ${unitNumber}, ${buildingName}${
+      `New task assigned at ${unitNumber}${buildingName ? `, ${buildingName}` : ""}${
         isTemporaryAssignment ? " (Temporary Assignment)" : ""
       }`,
       "task_assignment" as unknown as NotificationType
@@ -421,8 +421,11 @@ export const reassignTaskService = async (
         "employee",
         "NewTaskAssign.svg",
         "Task Reassignment",
-        `You have been assigned a new task at ${unitNumber || task.unitNumber || "Unknown"}, ${
-          buildingName || task.buildingName || "Unknown"
+        `You have been assigned a new task at ${unitNumber || task.unitNumber || "Unknown"}${
+          buildingName || task.buildingName
+            ? `, ${buildingName || task.buildingName}`
+            : ""
+        }
         }${isTemporaryAssignment ? " (Temporary Assignment)" : ""}`,
         "task_assignment" as unknown as NotificationType
       );
@@ -433,7 +436,7 @@ export const reassignTaskService = async (
 
     // --- Update task fields ---
     if (unitNumber) task.unitNumber = unitNumber;
-    if (buildingName) task.buildingName = buildingName;
+    if (buildingName) task.buildingName = buildingName || "";
     if (propertyId) task.propertyId = new Types.ObjectId(propertyId) as any;
     if (specialInstructions !== undefined)
       task.specialInstructions = specialInstructions;
@@ -448,7 +451,7 @@ export const reassignTaskService = async (
 
     // --- Update pickup request fields ---
     if (unitNumber) pickup.unitNumber = unitNumber;
-    if (buildingName) pickup.buildingNumber = buildingName;
+    if (buildingName) pickup.buildingNumber = buildingName || "";
     if (propertyId) pickup.propertyId = new Types.ObjectId(propertyId) as any;
     if (specialInstructions !== undefined)
       pickup.specialInstructions = specialInstructions;

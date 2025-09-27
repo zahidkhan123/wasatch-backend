@@ -10,7 +10,7 @@ export const responseMessages = {
   invalidCredentials: "Incorrect email or password",
   userNotFound: "user not found",
   invalidOtp: "The OTP you entered is invalid or expired.",
-  otpSent: "We've sent you an OTP! Check your device.",
+  otpSent: "We've sent you an OTP! Check your email inbox.",
   verifyEmail: "Please verify your email address to continue.",
   emailVerified: "Your email has been verified successfully.",
   unauthorizedAccess: "Access denied",

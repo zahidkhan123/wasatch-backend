@@ -7,10 +7,9 @@ dayjs.extend(timezone);
 
 const getFeedbackService = async () => {
   try {
-    const feedback = await Feedback.find().populate(
-      "userId",
-      "profile.firstName profile.lastName email"
-    );
+    const feedback = await Feedback.find()
+      .populate("userId", "profile.firstName profile.lastName email")
+      .sort({ createdAt: -1 });
 
     // const formattedFeedback = feedback.map((feedback) => {
     //   return {

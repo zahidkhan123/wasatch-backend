@@ -134,8 +134,8 @@ export const updateUserProfileSchema = Joi.object({
       "string.pattern.base": "Invalid Property ID",
       "any.required": "Property is required",
     }),
-  buildingNumber: Joi.string().optional().messages({
-    "string.empty": "Building number is required",
+  buildingNumber: Joi.string().allow("").optional().messages({
+    // "string.empty": "Building number is optional",
   }),
   unitNumber: Joi.string().optional().messages({
     "string.empty": "Unit number is required",

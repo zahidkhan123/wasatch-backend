@@ -23,6 +23,7 @@ export const updateUserService = async (
   data: updateUserRequest
 ) => {
   try {
+    console.log(data);
     const user = await User.findByIdAndUpdate(userId, data, {
       new: true,
     })
@@ -42,7 +43,7 @@ export const updateUserService = async (
         data: null,
       };
     }
-
+    console.log(user);
     // Construct response object similar to the example
     const responseUser = {
       _id: user._id,

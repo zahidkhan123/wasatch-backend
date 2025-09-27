@@ -135,7 +135,7 @@ export const createOnDemandPickup = async (
         requestId: pickup._id,
         propertyId: pickup.propertyId,
         unitNumber: pickup.unitNumber,
-        buildingName: pickup.buildingNumber,
+        buildingName: pickup.buildingNumber || "",
         // Ensure scheduledStart and scheduledEnd are stored in UTC, not with a +5 hour offset
         scheduledStart: slotStart.utc().toDate(),
         scheduledEnd: slotEnd.utc().toDate(),
@@ -163,7 +163,9 @@ export const createOnDemandPickup = async (
           "employee",
           "pickup.svg",
           "Pickup Status",
-          `A new pickup at ${pickup.unitNumber}, ...${pickup.buildingNumber || ""} has been assigned.`,
+          `A new pickup at ${pickup.unitNumber}${
+            pickup.buildingNumber ? `, ${pickup.buildingNumber}` : ""
+          } has been assigned.`,
           "pickup_status"
         );
       }

@@ -524,15 +524,40 @@ interface CheckInBody {
   location: Location;
 }
 
-const CHECKIN_RADIUS_METERS = 100;
-const GRACE_MINUTES = 7;
+const CHECKIN_RADIUS_METERS = 200;
+const GRACE_MINUTES = 15;
 
 const isWithinRadius = (propertyCoords: Location, employeeCoords: Location) => {
-  const { lat: lat1, lng: lng1 } = propertyCoords;
-  const { lat: lat2, lng: lng2 } = employeeCoords;
+  console.log("propertyCoords", propertyCoords);
+  console.log("employeeCoords", employeeCoords);
+
+  // Defensive: parse floats to avoid string/number mismatch
+  const lat1 =
+    typeof propertyCoords.lat === "string"
+      ? parseFloat(propertyCoords.lat)
+      : propertyCoords.lat;
+  const lng1 =
+    typeof propertyCoords.lng === "string"
+      ? parseFloat(propertyCoords.lng)
+      : propertyCoords.lng;
+  let lat2 =
+    typeof employeeCoords.lat === "string"
+      ? parseFloat(employeeCoords.lat)
+      : employeeCoords.lat;
+  const lng2 =
+    typeof employeeCoords.lng === "string"
+      ? parseFloat(employeeCoords.lng)
+      : employeeCoords.lng;
+
+  // Round off employee latitude to 5 decimal places
+  lat2 = Math.round(lat2 * 100000) / 100000;
+
+  console.log("Rounded employee lat to 5 decimals:", lat2);
 
   const toRad = (value: number) => (value * Math.PI) / 180;
   const R = 6371000; // Radius of Earth in meters
+
+  // Haversine formula
   const dLat = toRad(lat2 - lat1);
   const dLng = toRad(lng2 - lng1);
 
@@ -541,8 +566,12 @@ const isWithinRadius = (propertyCoords: Location, employeeCoords: Location) => {
     Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLng / 2) ** 2;
 
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  const distance = R * c;
 
-  return R * c <= CHECKIN_RADIUS_METERS;
+  // For debugging: log the computed distance and coordinates
+  // console.log("Property:", lat1, lng1, "Employee:", lat2, lng2, "Distance:", distance);
+
+  return distance <= CHECKIN_RADIUS_METERS;
 };
 
 // const checkIn = async (
@@ -985,18 +1014,18 @@ const checkIn = async (
     });
 
     // Prevent duplicate check-in for the same property
-    if (
-      attendance &&
-      attendance.propertyVisits.some(
-        (visit) => visit.propertyId.toString() === propertyId
-      )
-    ) {
-      return {
-        success: false,
-        message: "Already checked in at this property today.",
-        statusCode: 409,
-      };
-    }
+    // if (
+    //   attendance &&
+    //   attendance.propertyVisits.some(
+    //     (visit) => visit.propertyId.toString() === propertyId
+    //   )
+    // ) {
+    //   return {
+    //     success: false,
+    //     message: "Already checked in at this property today.",
+    //     statusCode: 409,
+    //   };
+    // }
 
     // Validate property location
     const isNearby = isWithinRadius(property.location, {
@@ -1122,16 +1151,17 @@ const checkOut = async (
       };
     }
 
-    // Block if already checked out at this property
-    if (visit.checkOut?.location?.lat && visit.checkOut?.location?.lng) {
-      return {
-        success: false,
-        message: "Already checked out from this property.",
-        statusCode: 409,
-      };
-    }
+    // // Block if already checked out at this property
+    // if (visit.checkOut?.location?.lat && visit.checkOut?.location?.lng) {
+    //   return {
+    //     success: false,
+    //     message: "Already checked out from this property.",
+    //     statusCode: 409,
+    //   };
+    // }
 
     // Validate geolocation
+    // Find the property to validate location
     const property = await Property.findById(new Types.ObjectId(propertyId));
     if (!property || !property.location) {
       return {
@@ -1141,6 +1171,7 @@ const checkOut = async (
       };
     }
 
+    // Check if user is at the property
     const isNearby = isWithinRadius(property.location, {
       lat: location.latitude,
       lng: location.longitude,
@@ -1153,8 +1184,24 @@ const checkOut = async (
       };
     }
 
-    // Record checkout
-    visit.checkOut = {
+    // Find the first propertyVisit with active check-in but not checked out
+    const activeVisit = attendance.propertyVisits.find(
+      (v) =>
+        v.propertyId.toString() === propertyId &&
+        v.checkIn?.time &&
+        (!v.checkOut || !v.checkOut.location?.lat || !v.checkOut.location?.lng)
+    );
+
+    if (!activeVisit) {
+      return {
+        success: false,
+        message: "No active check-in found for this property.",
+        statusCode: 404,
+      };
+    }
+
+    // Record checkout for the active visit
+    activeVisit.checkOut = {
       time: now.toDate(),
       location: { lat: location.latitude, lng: location.longitude },
     };
@@ -1504,7 +1551,7 @@ const getEmployeeCheckInStatus = async (employeeId: string) => {
   const unreadNotifications = await Notification.countDocuments({
     recipientId: employeeId,
     status: "unread",
-  }).countDocuments();
+  });
 
   if (!attendance) {
     return {
@@ -1520,20 +1567,21 @@ const getEmployeeCheckInStatus = async (employeeId: string) => {
     };
   }
 
+  // If there is at least one visit that is checked in but not checked out, allow check out, but not check in
   const hasActiveVisit = attendance.propertyVisits.some(
     (v) =>
       v.checkIn?.location?.lat &&
       v.checkIn?.location?.lng &&
       (!v.checkOut?.location?.lat || !v.checkOut?.location?.lng)
   );
-
+  console.log("hasActiveVisit", hasActiveVisit);
   if (hasActiveVisit) {
     return {
       success: true,
       message: "Employee has active check-in(s).",
       statusCode: 200,
       data: {
-        canCheckIn: false,
+        canCheckIn: false, // Cannot check in again until checked out from all active visits
         canCheckOut: true,
         checkedIn: true,
         unreadNotifications: unreadNotifications,
@@ -1541,6 +1589,7 @@ const getEmployeeCheckInStatus = async (employeeId: string) => {
     };
   }
 
+  // If all visits are checked out, allow check in again (multiple check-ins allowed)
   return {
     success: true,
     message: "Employee has completed all check-ins and check-outs for today.",
@@ -1549,7 +1598,7 @@ const getEmployeeCheckInStatus = async (employeeId: string) => {
       canCheckIn: true,
       canCheckOut: false,
       checkedIn: false,
-      unreadNotifications,
+      unreadNotifications: unreadNotifications,
     },
   };
 };
