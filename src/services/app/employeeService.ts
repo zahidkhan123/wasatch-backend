@@ -116,6 +116,10 @@ const getEmployeeTasks = async (
     };
 
     // Optimize: Only set scheduledStart once, with priority: todayOnly > date > status/type/propertyId
+    // The expected format for the date sent from the frontend should be an ISO 8601 string (e.g., "2024-06-07" or "2024-06-07T00:00:00Z").
+    // The backend expects filters.date as a string that can be parsed by dayjs or the getDayRangeInTZ utility.
+    // Example accepted formats: "YYYY-MM-DD" or "YYYY-MM-DDTHH:mm:ssZ"
+
     let scheduledStartSet = false;
 
     // Handle todayOnly filter
@@ -126,6 +130,7 @@ const getEmployeeTasks = async (
       taskQuery.scheduledStart = { $gte: today.start, $lte: today.end };
       scheduledStartSet = true;
     } else if (filters.date) {
+      // filters.date should be a string in "YYYY-MM-DD" or ISO format
       const dateRange = getDayRangeInTZ(filters.date);
       taskQuery.scheduledStart = {
         $gte: dateRange.start.toISOString(),
@@ -308,12 +313,62 @@ const startTask = async (taskId: string, employeeId: string) => {
         success: false,
       };
     }
-    const notificationSetting = await NotificationSettingModel.findOne({
-      userId: (task.requestId as any).userId,
-    }).select("issueUpdate taskStatus");
+
+    // Get propertyId from task
+    const propertyId = task.propertyId?.toString();
+    if (!propertyId) {
+      return {
+        message: "Task property not found",
+        statusCode: 400,
+        success: false,
+      };
+    }
+
+    // Find today's attendance record for the employee (Mountain Time)
+    const mountainNow = dayjs().tz("America/Denver");
+    const startOfDay = mountainNow.startOf("day").toDate();
+    const endOfDay = mountainNow.endOf("day").toDate();
+
+    const attendanceRecord = await Attendance.findOne({
+      employeeId: new Types.ObjectId(employeeId),
+      shiftDate: { $gte: startOfDay, $lte: endOfDay },
+    });
+
+    // Employee can check in and out multiple times, but can only start the task if he is currently checked in (i.e., has an active check-in for this property)
+    let isCheckedIn = false;
+    // Fix: Allow starting the task if checkIn exists and checkOut is either missing or does not have a location
+    if (attendanceRecord && Array.isArray(attendanceRecord.propertyVisits)) {
+      isCheckedIn = attendanceRecord.propertyVisits.some((visit: any) => {
+        // Check if property matches and checkIn exists
+        if (
+          visit.propertyId?.toString() === propertyId &&
+          visit.checkIn &&
+          visit.checkIn.location
+        ) {
+          // Allow if checkOut is missing, or checkOut.location is missing
+          if (
+            !visit.checkOut ||
+            !visit.checkOut.location ||
+            !visit.checkOut.location.lat ||
+            !visit.checkOut.location.lng
+          ) {
+            return true;
+          }
+        }
+        return false;
+      });
+    }
+    console.log("isCheckedIn", isCheckedIn);
+    if (!isCheckedIn) {
+      return {
+        message: "Check in to start the task.",
+        statusCode: 403,
+        success: false,
+      };
+    }
+
     // Check if current time is within scheduledStart and scheduledEnd
-    const now = new Date(); // this would be the mst time
-    // console.log("now", now);
+    const now = new Date();
     if (now < task.scheduledStart || now > task.scheduledEnd) {
       return {
         message: "Task can only be started within its scheduled time window",
@@ -321,10 +376,13 @@ const startTask = async (taskId: string, employeeId: string) => {
         success: false,
       };
     }
+
+    // Update PickupRequest status
     await PickupRequest.updateOne(
       { _id: (task.requestId as any)._id },
       { $set: { status: "in_progress" } }
     );
+
     // Assign the employeeId to the task's employeeId field and update status/actualStart
     task.employeeId = new Types.ObjectId(employeeId) as any;
     task.actualStart = now;
@@ -339,16 +397,24 @@ const startTask = async (taskId: string, employeeId: string) => {
       requestType: (task.requestId as any)?.type || "routine",
     });
 
-    // if (notificationSetting?.taskStatus) {
-    //   await sendNotification(
-    //     (task.requestId as any).userId.toString(),
-    //     "user",
-    //     "Civil.png",
-    //     "Task Started",
-    //     "Your task has been started",
-    //     "task_alert" as NotificationType
-    //   );
-    // }
+    // Find the notification settings for the user and populate the user details (including fcmTokens)
+    const notificationSetting = await NotificationSettingModel.findOne({
+      userId: (task.requestId as any).userId,
+      role: "user",
+    })
+      .select("issueUpdates taskStatus userId")
+      .populate("userId", "fcmTokens");
+
+    if (notificationSetting?.taskStatus) {
+      await sendNotification(
+        (task.requestId as any).userId.toString(),
+        "user",
+        "Civil.png",
+        "Task Started",
+        "Your task has been started",
+        "task_started" as NotificationType
+      );
+    }
     return {
       message: "Task started successfully",
       data: task,
@@ -379,6 +445,58 @@ const endTask = async (taskId: string, employeeId: string) => {
       return {
         message: "Task not found",
         statusCode: 404,
+        success: false,
+      };
+    }
+
+    // Get propertyId from task
+    const propertyId = task.propertyId?.toString();
+    if (!propertyId) {
+      return {
+        message: "Task property not found",
+        statusCode: 400,
+        success: false,
+      };
+    }
+
+    // Find today's attendance record for the employee (Mountain Time)
+    const mountainNow = dayjs().tz("America/Denver");
+    const startOfDay = mountainNow.startOf("day").toDate();
+    const endOfDay = mountainNow.endOf("day").toDate();
+
+    const attendanceRecord = await Attendance.findOne({
+      employeeId: new Types.ObjectId(employeeId),
+      shiftDate: { $gte: startOfDay, $lte: endOfDay },
+    });
+
+    // Employee can check in and out multiple times, but can only complete the task if he is currently checked in (i.e., has an active check-in for this property)
+    let isCheckedIn = false;
+    if (attendanceRecord && Array.isArray(attendanceRecord.propertyVisits)) {
+      isCheckedIn = attendanceRecord.propertyVisits.some((visit: any) => {
+        // Check if property matches and checkIn exists
+        if (
+          visit.propertyId?.toString() === propertyId &&
+          visit.checkIn &&
+          visit.checkIn.location
+        ) {
+          // Allow if checkOut is missing, or checkOut.location is missing or incomplete
+          if (
+            !visit.checkOut ||
+            !visit.checkOut.location ||
+            !visit.checkOut.location.lat ||
+            !visit.checkOut.location.lng
+          ) {
+            return true;
+          }
+        }
+        return false;
+      });
+    }
+
+    if (!isCheckedIn) {
+      return {
+        message: "Check in to complete the task.",
+        statusCode: 403,
         success: false,
       };
     }
@@ -475,20 +593,23 @@ const delayTask = async (taskId: string, employeeId: string) => {
         success: false,
       };
     }
-
+    console.log("notificationSetting", notificationSetting);
     task.status = "delayed";
     // task.actualEnd = now;
     await task.save();
-    if (notificationSetting?.taskStatus) {
+    console.log("task request id", task.requestId);
+    // if (notificationSetting?.taskStatus) {
+    if ((task.requestId as any)?.userId) {
       await sendNotification(
-        (task.requestId as any).userId.toString(),
+        (task.requestId as any)?.userId?.toString(),
         "user",
         "alert.svg",
         "Task Delayed",
         "Your task has been delayed",
-        "task_alert" as NotificationType
+        "pickup_status" as NotificationType
       );
     }
+    // }
     return {
       message: "Task delayed successfully",
       data: task,

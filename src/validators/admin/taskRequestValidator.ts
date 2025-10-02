@@ -13,8 +13,6 @@ export const assignTaskToEmployeeSchema = joi.object({
   }),
   buildingName: joi.string().min(1).max(100).optional().messages({
     "string.base": "Building name must be a string.",
-    "string.empty": "Building name is required.",
-    "any.required": "Building name is required.",
   }),
   propertyId: joi
     .string()

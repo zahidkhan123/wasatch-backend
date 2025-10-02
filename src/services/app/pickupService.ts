@@ -302,8 +302,10 @@ export const getPickupRequests = async ({
       case "scheduled":
         query.status = "scheduled";
         // Only add implicit "future" bound if no explicit date(s)
+        // For "scheduled", if no explicit date(s) are provided, do not restrict to only today.
+        // This will include all scheduled pickups, regardless of whether they are in the past or future.
         if (!date && !dateFrom && !dateTo) {
-          query.date = { ...(query.date || {}), $gte: now };
+          // No additional date filter; show all scheduled pickups (future and past)
         }
         break;
 

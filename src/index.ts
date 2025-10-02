@@ -50,7 +50,7 @@ app.use(helmet());
 app.use(express.json());
 
 // app.use(cors(corsOptions));
-const port = process.env.PORT || 3001;
+const port = process.env.PORT || 3000;
 app.use(morgan("combined"));
 app.use(express.urlencoded({ extended: true }));
 app.use(
